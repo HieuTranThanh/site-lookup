@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Site Lookup Tool</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>🔎 Tra cứu trạm (Paste SMS)</h2>
+
+<textarea id="input" placeholder="Dán SMS hoặc alarm vào đây..."></textarea>
+
+<div class="buttons">
+  <button onclick="process()">Tra cứu</button>
+  <button onclick="copyResult()">Copy kết quả</button>
+</div>
+
+<pre id="output"></pre>
+
+<script>
+let mapping = {};
+
+// 🔥 LINK GOOGLE SHEET CSV (bạn thay vào đây)
+const CSV_URL = "PASTE_LINK_CSV_HERE";
+
+// Load dữ liệu
+fetch(CSV_URL)
+  .then(res => res.text())
+  .then(csv => {
+    let rows = csv.split("\n").slice(1);
+
+    rows.forEach(r => {
+      let cols = r.split(",");
+      if (cols.length >= 2) {
+        let oldName = cols[0].trim().toUpperCase();
+        let newName = cols[1].trim().toUpperCase();
+
+        if (oldName && newName) {
+          mapping[newName] = oldName;
+          mapping[oldName] = newName; // tra 2 chiều
+        }
+      }
+    });
+
+    console.log("Loaded mapping:", Object.keys(mapping).length);
+  });
+
+// Xử lý input
+function process() {
+  let text = document.getElementById("input").value.toUpperCase();
+
+  let names = text.match(/[A-Z]{2,}[A-Z0-9]*\d+/g) || [];
+  names = [...new Set(names)];
+
+  let result = names.map(n => {
+    let res = mapping[n];
+    return res
+      ? `✅ ${n} → ${res}`
+      : `❌ ${n} → NOT FOUND`;
+  });
+
+  document.getElementById("output").innerText = result.join("\n");
+}
+
+// Auto chạy khi paste
+document.getElementById("input").addEventListener("input", process);
+
+// Copy kết quả
+function copyResult() {
+  let text = document.getElementById("output").innerText;
+  navigator.clipboard.writeText(text);
+  alert("Đã copy!");
+}
+</script>
+
+</body>
+</html>
