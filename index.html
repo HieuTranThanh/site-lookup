@@ -276,10 +276,10 @@
     function renderResults(rows) {
       resultsBodyEl.innerHTML = rows.map((row) => `
         <tr>
-          <td><span class="code-pill">${escapeHtml(row.input)}</span></td>
-          <td>${escapeHtml(row.type)}</td>
-          <td>${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
-          <td><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
+          <td data-label="Mã nhận diện"><span class="code-pill">${escapeHtml(row.input)}</span></td>
+          <td data-label="Loại tra cứu">${escapeHtml(row.type)}</td>
+          <td data-label="Kết quả đối chiếu">${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
+          <td data-label="Trạng thái"><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
         </tr>
       `).join("");
 
