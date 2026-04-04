@@ -260,10 +260,11 @@
       }
 
       const rows = candidates.map((candidate) => {
-        const match = mapping.get(candidate);
+        const resolution = resolveLookup(candidate);
+        const match = resolution.match;
         return {
           input: candidate,
-          type: match ? match.direction : "Chưa xác định",
+          type: match ? resolution.type : "Chưa xác định",
           output: match ? match.counterpart : "Không tìm thấy trong danh sách",
           found: Boolean(match)
         };
@@ -287,6 +288,39 @@
 
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
+    }
+
+    function resolveLookup(candidate) {
+      const directMatch = mapping.get(candidate);
+      if (directMatch) {
+        return {
+          match: directMatch,
+          type: directMatch.direction
+        };
+      }
+
+      const siteFromCellName = findSiteCodeFromCellName(candidate);
+      if (siteFromCellName) {
+        const cellMatch = mapping.get(siteFromCellName);
+        if (cellMatch) {
+          return {
+            match: cellMatch,
+            type: `${cellMatch.direction} (từ cell name)`
+          };
+        }
+      }
+
+      return { match: null, type: null };
+    }
+
+    function findSiteCodeFromCellName(candidate) {
+      for (const siteCode of mapping.keys()) {
+        if (candidate.startsWith(siteCode)) {
+          return siteCode;
+        }
+      }
+
+      return null;
     }
 
     function renderEmptyState(title, description) {
