@@ -22,28 +22,40 @@
 let mapping = {};
 
 // 🔥 LINK GOOGLE SHEET CSV (bạn thay vào đây)
-const CSV_URL = "PASTE_LINK_CSV_HERE";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlirnxQ6cBiVm0Wp_zXLI3E45_t0xbAzBHAuxSRo7RTamq-hsDWS8Js9U1ELubUGYkVIjA8eAEJwb_/pub?gid=1096989540&single=true&output=csv";
 
 // Load dữ liệu
 fetch(CSV_URL)
   .then(res => res.text())
   .then(csv => {
-    let rows = csv.split("\n").slice(1);
+    let rows = csv.split("\n").map(r => r.trim()).filter(r => r);
 
-    rows.forEach(r => {
+    // 👉 Lấy header
+    let headers = rows[0].split(",").map(h => h.trim().toLowerCase());
+
+    // 👉 Xác định đúng cột theo tên
+    let oldIndex = headers.findIndex(h => h.includes("sitename cũ"));
+    let newIndex = headers.findIndex(h => h.includes("sitename mới"));
+
+    if (oldIndex === -1 || newIndex === -1) {
+      alert("❌ Không tìm thấy cột 'Sitename cũ' hoặc 'Sitename mới'");
+      return;
+    }
+
+    // 👉 Load dữ liệu
+    rows.slice(1).forEach(r => {
       let cols = r.split(",");
-      if (cols.length >= 2) {
-        let oldName = cols[0].trim().toUpperCase();
-        let newName = cols[1].trim().toUpperCase();
 
-        if (oldName && newName) {
-          mapping[newName] = oldName;
-          mapping[oldName] = newName; // tra 2 chiều
-        }
+      let oldName = cols[oldIndex]?.trim().toUpperCase();
+      let newName = cols[newIndex]?.trim().toUpperCase();
+
+      if (oldName && newName) {
+        mapping[newName] = oldName;
+        mapping[oldName] = newName; // tra 2 chiều
       }
     });
 
-    console.log("Loaded mapping:", Object.keys(mapping).length);
+    console.log("✅ Loaded mapping:", Object.keys(mapping).length);
   });
 
 // Xử lý input
