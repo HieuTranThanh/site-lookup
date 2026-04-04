@@ -78,6 +78,7 @@
 
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlirnxQ6cBiVm0Wp_zXLI3E45_t0xbAzBHAuxSRo7RTamq-hsDWS8Js9U1ELubUGYkVIjA8eAEJwb_/pub?gid=1096989540&single=true&output=csv";
+    const FALLBACK_JSON_URL = "./mapping.json";
 
     const mapping = new Map();
     let dataReady = false;
@@ -101,48 +102,92 @@
     loadMapping();
 
     async function loadMapping() {
+      mapping.clear();
+
       try {
-        const response = await fetch(CSV_URL, { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error("Không thể tải file CSV từ Google Sheet.");
+        const fallbackResponse = await fetch(FALLBACK_JSON_URL, { cache: "no-store" });
+        if (!fallbackResponse.ok) {
+          throw new Error("Không thể tải file mapping.json.");
         }
 
-        const csvText = await response.text();
-        const rows = parseCsv(csvText);
+        const fallbackData = await fallbackResponse.json();
+        const pairCount = fillMappingFromPairs(fallbackData.mappings || []);
 
-        if (rows.length < 2) {
-          throw new Error("File CSV không có đủ dữ liệu để tạo mapping.");
+        if (!pairCount) {
+          throw new Error("mapping.json không có dữ liệu hợp lệ.");
         }
-
-        const headers = rows[0].map(normalizeHeader);
-        const oldIndex = headers.findIndex((header) => header === "sitename cu");
-        const newIndex = headers.findIndex((header) => header === "sitename moi");
-
-        if (oldIndex === -1 || newIndex === -1) {
-          throw new Error("Không tìm thấy hai cột 'Sitename cũ' và 'Sitename mới' trong Google Sheet.");
-        }
-
-        rows.slice(1).forEach((row) => {
-          const oldName = normalizeSiteCode(row[oldIndex]);
-          const newName = normalizeSiteCode(row[newIndex]);
-
-          if (!oldName || !newName) {
-            return;
-          }
-
-          mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới" });
-          mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ" });
-        });
 
         dataReady = true;
-        siteCountEl.textContent = (mapping.size / 2).toLocaleString("vi-VN");
-        setStatus("ready", "Sẵn sàng", "Đã tải dữ liệu thành công. Bạn có thể tra cứu ngay.");
+        siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
+        setStatus(
+          "ready",
+          "Sẵn sàng",
+          `Đã tải dữ liệu từ mapping.json${fallbackData.generatedAt ? ` (${fallbackData.generatedAt})` : ""}.`
+        );
         processLookup();
       } catch (error) {
-        console.error(error);
-        dataReady = false;
-        setStatus("error", "Tải dữ liệu thất bại", error.message || "Không thể đọc dữ liệu mapping.");
+        console.error("mapping.json error:", error);
+
+        try {
+          const response = await fetch(CSV_URL, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("Không thể tải file CSV từ Google Sheet.");
+          }
+
+          const csvText = await response.text();
+          const rows = parseCsv(csvText);
+
+          if (rows.length < 2) {
+            throw new Error("File CSV không có đủ dữ liệu để tạo mapping.");
+          }
+
+          const headers = rows[0].map(normalizeHeader);
+          const oldIndex = headers.findIndex((header) => header === "sitename cu");
+          const newIndex = headers.findIndex((header) => header === "sitename moi");
+
+          if (oldIndex === -1 || newIndex === -1) {
+            throw new Error("Không tìm thấy hai cột 'Sitename cũ' và 'Sitename mới' trong Google Sheet.");
+          }
+
+          const pairs = rows.slice(1).map((row) => ({
+            oldName: normalizeSiteCode(row[oldIndex]),
+            newName: normalizeSiteCode(row[newIndex])
+          }));
+
+          const pairCount = fillMappingFromPairs(pairs);
+
+          dataReady = true;
+          siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
+          setStatus(
+            "ready",
+            "Đang dùng Google Sheet dự phòng",
+            "mapping.json đang lỗi hoặc chưa có, hệ thống chuyển sang Google Sheet."
+          );
+          processLookup();
+        } catch (sheetError) {
+          console.error("Google Sheet fallback error:", sheetError);
+          dataReady = false;
+          setStatus("error", "Tải dữ liệu thất bại", sheetError.message || "Không thể đọc dữ liệu mapping.");
+        }
       }
+    }
+
+    function fillMappingFromPairs(pairs) {
+      mapping.clear();
+
+      (pairs || []).forEach((pair) => {
+        const oldName = normalizeSiteCode(pair.oldName);
+        const newName = normalizeSiteCode(pair.newName);
+
+        if (!oldName || !newName) {
+          return;
+        }
+
+        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới" });
+        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ" });
+      });
+
+      return mapping.size / 2;
     }
 
     function parseCsv(csvText) {
