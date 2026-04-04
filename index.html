@@ -2,89 +2,390 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Site Lookup Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tra cuu sitename</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">MobiFone Site Lookup</p>
+        <h1>Tra cuu nhanh sitename cu va moi</h1>
+        <p class="hero-text">
+          Dan SMS, alarm hoac noi dung bat ky de doi chieu giua ten tram cu va ten tram moi.
+          He thong tu dong nhan dien ma tram va tra cuu hai chieu.
+        </p>
+      </div>
 
-<h2>🔎 Tra cứu trạm (Paste SMS)</h2>
+      <div class="hero-panel">
+        <div class="status-card">
+          <span id="statusBadge" class="status-badge loading">Dang tai du lieu</span>
+          <p id="statusText" class="status-text">Dang ket noi den Google Sheet va tao bang doi chieu...</p>
+        </div>
 
-<textarea id="input" placeholder="Dán SMS hoặc alarm vào đây..."></textarea>
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="stat-label">So cap mapping</span>
+            <strong id="siteCount" class="stat-value">0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Che do</span>
+            <strong class="stat-value">Tra cuu 2 chieu</strong>
+          </div>
+        </div>
+      </div>
+    </header>
 
-<div class="buttons">
-  <button onclick="process()">Tra cứu</button>
-  <button onclick="copyResult()">Copy kết quả</button>
-</div>
+    <main class="content-grid">
+      <section class="panel panel-input">
+        <div class="panel-heading">
+          <div>
+            <h2>Nhap noi dung can tra cuu</h2>
+            <p class="muted">Tool se tu dong tach cac ma tram tu SMS, alarm, ticket hoac ghi chu van hanh.</p>
+          </div>
+          <div class="chip-row">
+            <span class="chip">Cu sang moi</span>
+            <span class="chip">Moi sang cu</span>
+          </div>
+        </div>
 
-<pre id="output"></pre>
+        <label class="field-label" for="input">Noi dung dau vao</label>
+        <textarea
+          id="input"
+          placeholder="Vi du: Alarm tai DLBD01 va DLKEWR11 can kiem tra gap..."
+          spellcheck="false"
+        ></textarea>
 
-<script>
-let mapping = {};
+        <div class="actions">
+          <button id="lookupButton" class="btn btn-primary" type="button">Tra cuu ngay</button>
+          <button id="copyButton" class="btn btn-secondary" type="button">Copy ket qua</button>
+          <button id="clearButton" class="btn btn-ghost" type="button">Xoa noi dung</button>
+        </div>
 
-// 🔥 LINK GOOGLE SHEET CSV (bạn thay vào đây)
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlirnxQ6cBiVm0Wp_zXLI3E45_t0xbAzBHAuxSRo7RTamq-hsDWS8Js9U1ELubUGYkVIjA8eAEJwb_/pub?gid=1096989540&single=true&output=csv";
+        <div class="helper-grid">
+          <div class="helper-card">
+            <span class="helper-title">Nhan dien ma</span>
+            <p>Ho tro ma tram viet hoa, viet thuong, lay tu cau van ban co nhieu noi dung chen giua.</p>
+          </div>
+          <div class="helper-card">
+            <span class="helper-title">Cot du lieu</span>
+            <p>Doc truc tiep tu hai cot <strong>Sitename cu</strong> va <strong>Sitename moi</strong> trong Google Sheet.</p>
+          </div>
+        </div>
+      </section>
 
-// Load dữ liệu
-fetch(CSV_URL)
-  .then(res => res.text())
-  .then(csv => {
-    let rows = csv.split("\n").map(r => r.trim()).filter(r => r);
+      <section class="panel panel-output">
+        <div class="panel-heading">
+          <div>
+            <h2>Ket qua tra cuu</h2>
+            <p class="muted">Danh sach duoc sap theo thu tu xuat hien trong noi dung dau vao.</p>
+          </div>
+          <div class="summary-pill">
+            <span id="summaryText">Chua co du lieu tra cuu</span>
+          </div>
+        </div>
 
-    // 👉 Lấy header
-    let headers = rows[0].split(",").map(h => h.trim().toLowerCase());
+        <div id="emptyState" class="empty-state">
+          <h3>San sang tra cuu</h3>
+          <p>Dan noi dung vao o ben trai, he thong se tu dong hien ket qua doi chieu sitename.</p>
+        </div>
 
-    // 👉 Xác định đúng cột theo tên
-    let oldIndex = headers.findIndex(h => h.includes("sitename cũ"));
-    let newIndex = headers.findIndex(h => h.includes("sitename mới"));
+        <div id="resultsContainer" class="results-container" hidden>
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Ma nhan duoc</th>
+                <th>Loai</th>
+                <th>Ket qua doi chieu</th>
+                <th>Trang thai</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
 
-    if (oldIndex === -1 || newIndex === -1) {
-      alert("❌ Không tìm thấy cột 'Sitename cũ' hoặc 'Sitename mới'");
-      return;
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlirnxQ6cBiVm0Wp_zXLI3E45_t0xbAzBHAuxSRo7RTamq-hsDWS8Js9U1ELubUGYkVIjA8eAEJwb_/pub?gid=1096989540&single=true&output=csv";
+
+    const mapping = new Map();
+    let mappingPairCount = 0;
+    let dataReady = false;
+
+    const inputEl = document.getElementById("input");
+    const lookupButton = document.getElementById("lookupButton");
+    const copyButton = document.getElementById("copyButton");
+    const clearButton = document.getElementById("clearButton");
+    const statusBadgeEl = document.getElementById("statusBadge");
+    const statusTextEl = document.getElementById("statusText");
+    const siteCountEl = document.getElementById("siteCount");
+    const summaryTextEl = document.getElementById("summaryText");
+    const emptyStateEl = document.getElementById("emptyState");
+    const resultsContainerEl = document.getElementById("resultsContainer");
+    const resultsBodyEl = document.getElementById("resultsBody");
+
+    lookupButton.addEventListener("click", processLookup);
+    copyButton.addEventListener("click", copyResult);
+    clearButton.addEventListener("click", clearInput);
+    inputEl.addEventListener("input", processLookup);
+
+    setLoadingState();
+    loadMapping();
+
+    async function loadMapping() {
+      try {
+        const response = await fetch(CSV_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Khong the tai file CSV tu Google Sheet.");
+        }
+
+        const csvText = await response.text();
+        const rows = parseCsv(csvText);
+
+        if (rows.length < 2) {
+          throw new Error("File CSV khong co du du lieu de tao mapping.");
+        }
+
+        const headers = rows[0].map(normalizeHeader);
+        const oldIndex = headers.findIndex((header) => header === "sitename cu");
+        const newIndex = headers.findIndex((header) => header === "sitename moi");
+
+        if (oldIndex === -1 || newIndex === -1) {
+          throw new Error("Khong tim thay hai cot 'Sitename cu' va 'Sitename moi' trong Google Sheet.");
+        }
+
+        rows.slice(1).forEach((row) => {
+          const oldName = normalizeSiteCode(row[oldIndex]);
+          const newName = normalizeSiteCode(row[newIndex]);
+
+          if (!oldName || !newName) {
+            return;
+          }
+
+          mapping.set(oldName, { counterpart: newName, direction: "Cu -> Moi" });
+          mapping.set(newName, { counterpart: oldName, direction: "Moi -> Cu" });
+        });
+
+        mappingPairCount = mapping.size / 2;
+        dataReady = true;
+        siteCountEl.textContent = mappingPairCount.toLocaleString("vi-VN");
+        setStatus("ready", "Da san sang", "Da tai du lieu thanh cong. Co the tra cuu ngay.");
+        processLookup();
+      } catch (error) {
+        console.error(error);
+        dataReady = false;
+        setStatus("error", "Tai du lieu that bai", error.message || "Khong the doc du lieu mapping.");
+      }
     }
 
-    // 👉 Load dữ liệu
-    rows.slice(1).forEach(r => {
-      let cols = r.split(",");
+    function parseCsv(csvText) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let inQuotes = false;
 
-      let oldName = cols[oldIndex]?.trim().toUpperCase();
-      let newName = cols[newIndex]?.trim().toUpperCase();
+      for (let i = 0; i < csvText.length; i += 1) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
 
-      if (oldName && newName) {
-        mapping[newName] = oldName;
-        mapping[oldName] = newName; // tra 2 chiều
+        if (char === "\"") {
+          if (inQuotes && nextChar === "\"") {
+            value += "\"";
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+
+        if (char === "," && !inQuotes) {
+          row.push(value.trim());
+          value = "";
+          continue;
+        }
+
+        if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && nextChar === "\n") {
+            i += 1;
+          }
+          row.push(value.trim());
+          if (row.some((cell) => cell !== "")) {
+            rows.push(row);
+          }
+          row = [];
+          value = "";
+          continue;
+        }
+
+        value += char;
       }
-    });
 
-    console.log("✅ Loaded mapping:", Object.keys(mapping).length);
-  });
+      if (value.length > 0 || row.length > 0) {
+        row.push(value.trim());
+        if (row.some((cell) => cell !== "")) {
+          rows.push(row);
+        }
+      }
 
-// Xử lý input
-function process() {
-  let text = document.getElementById("input").value.toUpperCase();
+      return rows;
+    }
 
-  let names = text.match(/[A-Z]{2,}[A-Z0-9]*\d+/g) || [];
-  names = [...new Set(names)];
+    function normalizeHeader(value) {
+      return (value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u0111\u0110]/g, "d")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    }
 
-  let result = names.map(n => {
-    let res = mapping[n];
-    return res
-      ? `✅ ${n} → ${res}`
-      : `❌ ${n} → NOT FOUND`;
-  });
+    function normalizeSiteCode(value) {
+      return (value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "");
+    }
 
-  document.getElementById("output").innerText = result.join("\n");
-}
+    function extractCandidates(text) {
+      const tokens = (text.toUpperCase().match(/[A-Z0-9_-]+/g) || []);
+      const unique = [];
+      const seen = new Set();
 
-// Auto chạy khi paste
-document.getElementById("input").addEventListener("input", process);
+      tokens.forEach((token) => {
+        if (token.length < 4) {
+          return;
+        }
 
-// Copy kết quả
-function copyResult() {
-  let text = document.getElementById("output").innerText;
-  navigator.clipboard.writeText(text);
-  alert("Đã copy!");
-}
-</script>
+        if (!/[A-Z]/.test(token) || !/\d/.test(token)) {
+          return;
+        }
 
+        if (!seen.has(token)) {
+          seen.add(token);
+          unique.push(token);
+        }
+      });
+
+      return unique;
+    }
+
+    function processLookup() {
+      const text = inputEl.value || "";
+      const candidates = extractCandidates(text);
+
+      if (!text.trim()) {
+        renderEmptyState("San sang tra cuu", "Dan noi dung vao o ben trai, he thong se tu dong hien ket qua doi chieu sitename.");
+        summaryTextEl.textContent = "Chua co du lieu tra cuu";
+        return;
+      }
+
+      if (!dataReady) {
+        renderEmptyState("Dang cho du lieu mapping", "He thong chua tai xong Google Sheet, vui long doi trong giay lat.");
+        summaryTextEl.textContent = "Dang cho du lieu mapping";
+        return;
+      }
+
+      if (candidates.length === 0) {
+        renderEmptyState("Khong nhan dien duoc ma tram", "Khong tim thay chuoi giong sitename trong noi dung vua nhap.");
+        summaryTextEl.textContent = "Khong co ma tram hop le";
+        return;
+      }
+
+      const rows = candidates.map((candidate) => {
+        const match = mapping.get(candidate);
+        return {
+          input: candidate,
+          type: match ? match.direction : "Chua xac dinh",
+          output: match ? match.counterpart : "Khong tim thay trong danh sach",
+          found: Boolean(match)
+        };
+      });
+
+      renderResults(rows);
+    }
+
+    function renderResults(rows) {
+      resultsBodyEl.innerHTML = rows.map((row) => `
+        <tr>
+          <td><span class="code-pill">${escapeHtml(row.input)}</span></td>
+          <td>${escapeHtml(row.type)}</td>
+          <td>${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
+          <td>
+            <span class="table-status ${row.found ? "ok" : "missing"}">
+              ${row.found ? "Da doi chieu" : "Khong tim thay"}
+            </span>
+          </td>
+        </tr>
+      `).join("");
+
+      emptyStateEl.hidden = true;
+      resultsContainerEl.hidden = false;
+
+      const foundCount = rows.filter((row) => row.found).length;
+      summaryTextEl.textContent = `Tim thay ${foundCount}/${rows.length} ma tram`;
+    }
+
+    function renderEmptyState(title, description) {
+      resultsBodyEl.innerHTML = "";
+      resultsContainerEl.hidden = true;
+      emptyStateEl.hidden = false;
+      emptyStateEl.innerHTML = `
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(description)}</p>
+      `;
+    }
+
+    async function copyResult() {
+      if (resultsContainerEl.hidden) {
+        return;
+      }
+
+      const lines = Array.from(resultsBodyEl.querySelectorAll("tr")).map((row) => {
+        const cells = row.querySelectorAll("td");
+        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText}`;
+      });
+
+      try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        setStatus("ready", "Da copy ket qua", "Noi dung ket qua da duoc copy vao clipboard.");
+      } catch (error) {
+        console.error(error);
+        setStatus("error", "Khong copy duoc", "Trinh duyet khong cap quyen clipboard. Hay copy thu cong trong bang ket qua.");
+      }
+    }
+
+    function clearInput() {
+      inputEl.value = "";
+      processLookup();
+      inputEl.focus();
+    }
+
+    function setLoadingState() {
+      setStatus("loading", "Dang tai du lieu", "Dang ket noi den Google Sheet va tao bang doi chieu...");
+      siteCountEl.textContent = "0";
+    }
+
+    function setStatus(mode, badgeText, detailText) {
+      statusBadgeEl.className = `status-badge ${mode}`;
+      statusBadgeEl.textContent = badgeText;
+      statusTextEl.textContent = detailText;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
 </body>
 </html>
