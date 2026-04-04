@@ -21,7 +21,7 @@
         <span id="statusBadge" class="status-badge loading">Đang tải dữ liệu</span>
         <span class="meta-item">Số cặp mapping: <strong id="siteCount">0</strong></span>
       </div>
-      <p id="statusText" class="status-text">Đang kết nối đến Google Sheet và tạo bảng đối chiếu...</p>
+      <p id="statusText" class="status-text">Đang đọc mapping.json và sẵn sàng chuyển sang Google Sheet nếu cần...</p>
     </header>
 
     <main class="content-stack">
@@ -119,11 +119,7 @@
 
         dataReady = true;
         siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
-        setStatus(
-          "ready",
-          "Sẵn sàng",
-          "Đã tải dữ liệu từ mapping.json."
-        );
+        setStatus("ready", "Sẵn sàng", "Đã tải dữ liệu từ mapping.json.");
         processLookup();
       } catch (error) {
         console.error("mapping.json error:", error);
@@ -172,6 +168,7 @@
       }
     }
 
+    // Build a bidirectional lookup map from old/new site pairs.
     function fillMappingFromPairs(pairs) {
       mapping.clear();
 
@@ -190,6 +187,7 @@
       return mapping.size / 2;
     }
 
+    // Parse CSV safely so quoted commas do not break the column alignment.
     function parseCsv(csvText) {
       const rows = [];
       let row = [];
@@ -242,6 +240,7 @@
       return rows;
     }
 
+    // Normalize headers to compare Vietnamese labels without depending on accents.
     function normalizeHeader(value) {
       return (value || "")
         .normalize("NFD")
@@ -259,6 +258,7 @@
         .replace(/\s+/g, "");
     }
 
+    // Extract likely site or cell-name tokens from free text input.
     function extractCandidates(text) {
       const tokens = text.toUpperCase().match(/[A-Z0-9_-]+/g) || [];
       const unique = [];
@@ -293,7 +293,7 @@
       }
 
       if (!dataReady) {
-        renderEmptyState("Đang chờ dữ liệu mapping", "Hệ thống chưa tải xong dữ liệu từ Google Sheet. Vui lòng đợi trong giây lát.");
+        renderEmptyState("Đang chờ dữ liệu mapping", "Hệ thống chưa tải xong dữ liệu. Vui lòng đợi trong giây lát.");
         summaryTextEl.textContent = "Đang chờ dữ liệu mapping";
         return;
       }
@@ -307,6 +307,7 @@
       const rows = candidates.map((candidate) => {
         const resolution = resolveLookup(candidate);
         const match = resolution.match;
+
         return {
           input: candidate,
           type: match ? resolution.type : "Chưa xác định",
@@ -335,6 +336,7 @@
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
     }
 
+    // Resolve either a direct sitename or a cell name that starts with a sitename.
     function resolveLookup(candidate) {
       const directMatch = mapping.get(candidate);
       if (directMatch) {
@@ -358,14 +360,17 @@
       return { match: null, type: null };
     }
 
+    // Prefer the longest matching prefix to avoid ambiguous cell-name matches.
     function findSiteCodeFromCellName(candidate) {
+      let bestMatch = null;
+
       for (const siteCode of mapping.keys()) {
-        if (candidate.startsWith(siteCode)) {
-          return siteCode;
+        if (candidate.startsWith(siteCode) && (!bestMatch || siteCode.length > bestMatch.length)) {
+          bestMatch = siteCode;
         }
       }
 
-      return null;
+      return bestMatch;
     }
 
     function renderEmptyState(title, description) {
@@ -404,7 +409,7 @@
     }
 
     function setLoadingState() {
-      setStatus("loading", "Đang tải dữ liệu", "Đang kết nối đến Google Sheet và tạo bảng đối chiếu...");
+      setStatus("loading", "Đang tải dữ liệu", "Đang đọc mapping.json và sẵn sàng chuyển sang Google Sheet nếu cần...");
       siteCountEl.textContent = "0";
     }
 
