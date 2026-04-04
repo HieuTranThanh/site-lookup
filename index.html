@@ -259,9 +259,9 @@
     }
 
     // Extract likely site or cell-name tokens from free text input.
-    // Underscores are excluded on purpose so ticket IDs such as TT_RAN... are ignored.
+    // MBF_ aliases are kept, while generic underscored ticket IDs remain ignored.
     function extractCandidates(text) {
-      const tokens = text.toUpperCase().match(/[A-Z0-9]+/g) || [];
+      const tokens = text.toUpperCase().match(/MBF_[A-Z0-9]+|[A-Z0-9]+/g) || [];
       const unique = [];
       const seen = new Set();
 
