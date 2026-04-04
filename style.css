@@ -317,14 +317,25 @@ textarea:focus {
     font-size: 11px;
   }
 
+  .results-table td:nth-child(1),
+  .results-table td:nth-child(3) {
+    white-space: nowrap;
+  }
+
   .code-pill {
     padding: 4px 8px;
     font-size: 11px;
+    white-space: nowrap;
   }
 
   .table-status {
     padding: 4px 8px;
     font-size: 11px;
+  }
+
+  .results-table td:nth-child(3) strong,
+  .results-table td:nth-child(3) .missing-text {
+    white-space: nowrap;
   }
 }
 
