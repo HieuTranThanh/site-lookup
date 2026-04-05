@@ -169,6 +169,7 @@
         } catch (sheetError) {
           console.error("Google Sheet fallback error:", sheetError);
           dataReady = false;
+          currentDataSource = "";
           setStatus("error", "Tải dữ liệu thất bại", sheetError.message || "Không thể đọc dữ liệu mapping.");
         }
       }
@@ -294,18 +295,21 @@
       const candidates = extractCandidates(text);
 
       if (!text.trim()) {
+        cancelPendingLookupLog();
         renderEmptyState("Sẵn sàng tra cứu", "Dán nội dung cần kiểm tra vào ô phía trên, hệ thống sẽ tự động hiển thị kết quả.");
         summaryTextEl.textContent = "Chưa có dữ liệu tra cứu";
         return;
       }
 
       if (!dataReady) {
+        cancelPendingLookupLog();
         renderEmptyState("Đang chờ dữ liệu mapping", "Hệ thống chưa tải xong dữ liệu. Vui lòng đợi trong giây lát.");
         summaryTextEl.textContent = "Đang chờ dữ liệu mapping";
         return;
       }
 
       if (candidates.length === 0) {
+        cancelPendingLookupLog();
         renderEmptyState("Không nhận diện được mã trạm", "Không tìm thấy chuỗi phù hợp với định dạng sitename trong nội dung vừa nhập.");
         summaryTextEl.textContent = "Không có mã trạm hợp lệ";
         return;
@@ -329,7 +333,7 @@
     function renderResults(rows) {
       resultsBodyEl.innerHTML = rows.map((row) => `
         <tr>
-          <td data-label="Mã nhận diện"><span class="code-pill">${escapeHtml(row.input)}</span></td>
+          <td data-label="Site nhận diện"><span class="code-pill">${escapeHtml(row.input)}</span></td>
           <td data-label="Loại tra cứu">${escapeHtml(row.type)}</td>
           <td data-label="Kết quả đối chiếu">${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
           <td data-label="Trạng thái"><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
@@ -342,13 +346,17 @@
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
 
-      scheduleLookupLog({
-        event: "lookup",
-        foundCount,
-        totalCount: rows.length,
-        dataSource: currentDataSource,
-        userAgent: navigator.userAgent
-      });
+      if (foundCount > 0) {
+        scheduleLookupLog({
+          event: "lookup",
+          foundCount,
+          totalCount: rows.length,
+          dataSource: currentDataSource,
+          userAgent: navigator.userAgent
+        });
+      } else {
+        cancelPendingLookupLog();
+      }
     }
 
     // Resolve either a direct sitename or a cell name that starts with a sitename.
@@ -418,6 +426,7 @@
     }
 
     function clearInput() {
+      cancelPendingLookupLog();
       inputEl.value = "";
       processLookup();
       inputEl.focus();
@@ -434,6 +443,14 @@
       statusTextEl.textContent = detailText;
     }
 
+    // Cancel a pending delayed log when the current input is no longer valid.
+    function cancelPendingLookupLog() {
+      if (logDebounceTimer) {
+        clearTimeout(logDebounceTimer);
+        logDebounceTimer = null;
+      }
+    }
+
     // Send a lightweight usage log to Google Apps Script without blocking the UI.
     function scheduleLookupLog(payload) {
       const signature = JSON.stringify(payload);
@@ -442,13 +459,12 @@
         return;
       }
 
-      if (logDebounceTimer) {
-        clearTimeout(logDebounceTimer);
-      }
+      cancelPendingLookupLog();
 
       logDebounceTimer = setTimeout(() => {
         sendLookupLog(payload);
         lastLoggedSignature = signature;
+        logDebounceTimer = null;
       }, 3000);
     }
 
