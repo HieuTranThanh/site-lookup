@@ -84,6 +84,8 @@
     const mapping = new Map();
     let dataReady = false;
     let currentDataSource = "";
+    let logDebounceTimer = null;
+    let lastLoggedSignature = "";
 
     const inputEl = document.getElementById("input");
     const copyButton = document.getElementById("copyButton");
@@ -340,7 +342,7 @@
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
 
-      sendLookupLog({
+      scheduleLookupLog({
         event: "lookup",
         foundCount,
         totalCount: rows.length,
@@ -433,6 +435,23 @@
     }
 
     // Send a lightweight usage log to Google Apps Script without blocking the UI.
+    function scheduleLookupLog(payload) {
+      const signature = JSON.stringify(payload);
+
+      if (signature === lastLoggedSignature) {
+        return;
+      }
+
+      if (logDebounceTimer) {
+        clearTimeout(logDebounceTimer);
+      }
+
+      logDebounceTimer = setTimeout(() => {
+        sendLookupLog(payload);
+        lastLoggedSignature = signature;
+      }, 1200);
+    }
+
     function sendLookupLog(payload) {
       if (!LOG_ENDPOINT) {
         return;
@@ -440,6 +459,7 @@
 
       fetch(LOG_ENDPOINT, {
         method: "POST",
+        mode: "no-cors",
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
