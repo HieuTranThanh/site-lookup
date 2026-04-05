@@ -79,9 +79,11 @@
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlirnxQ6cBiVm0Wp_zXLI3E45_t0xbAzBHAuxSRo7RTamq-hsDWS8Js9U1ELubUGYkVIjA8eAEJwb_/pub?gid=1096989540&single=true&output=csv";
     const FALLBACK_JSON_URL = "./mapping.json";
+    const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbxz88DWjlSDmCrGlrL4enRDuIl-o1IyGuO9CLIpwD37hMC6TnO7AJrx2cK9vbxrVjIY2g/exec";
 
     const mapping = new Map();
     let dataReady = false;
+    let currentDataSource = "";
 
     const inputEl = document.getElementById("input");
     const copyButton = document.getElementById("copyButton");
@@ -118,6 +120,7 @@
         }
 
         dataReady = true;
+        currentDataSource = "mapping.json";
         siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
         setStatus("ready", "Sẵn sàng", "Đã tải dữ liệu từ mapping.json.");
         processLookup();
@@ -153,6 +156,7 @@
           const pairCount = fillMappingFromPairs(pairs);
 
           dataReady = true;
+          currentDataSource = "google-sheet-fallback";
           siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
           setStatus(
             "ready",
@@ -335,6 +339,14 @@
 
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
+
+      sendLookupLog({
+        event: "lookup",
+        foundCount,
+        totalCount: rows.length,
+        dataSource: currentDataSource,
+        userAgent: navigator.userAgent
+      });
     }
 
     // Resolve either a direct sitename or a cell name that starts with a sitename.
@@ -418,6 +430,23 @@
       statusBadgeEl.className = `status-badge ${mode}`;
       statusBadgeEl.textContent = badgeText;
       statusTextEl.textContent = detailText;
+    }
+
+    // Send a lightweight usage log to Google Apps Script without blocking the UI.
+    function sendLookupLog(payload) {
+      if (!LOG_ENDPOINT) {
+        return;
+      }
+
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      }).catch((error) => {
+        console.error("Log error:", error);
+      });
     }
 
     function escapeHtml(value) {
