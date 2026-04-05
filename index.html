@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tra cứu sitename</title>
+  <title>MobiFone Site Lookup</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,11 +15,11 @@
       <p class="eyebrow">MobiFone Site Lookup</p>
       <h1>Tra cứu sitename cũ và mới</h1>
       <p class="intro">
-        Dán SMS, alarm hoặc nội dung vận hành vào ô bên dưới. Hệ thống sẽ tự nhận diện mã trạm và trả kết quả đối chiếu hai chiều.
+        Dán SMS alarm hoặc nội dung chứa site cần tra cứu vào ô bên dưới. Hệ thống sẽ tự nhận diện mã trạm và trả kết quả đối chiếu hai chiều.
       </p>
       <div class="header-meta">
         <span id="statusBadge" class="status-badge loading">Đang tải dữ liệu</span>
-        <span class="meta-item">Số cặp mapping: <strong id="siteCount">0</strong></span>
+        <span class="meta-item">Tổng số site mapping: <strong id="siteCount">0</strong></span>
       </div>
       <p id="statusText" class="status-text">Đang đọc mapping.json và sẵn sàng chuyển sang Google Sheet nếu cần...</p>
     </header>
@@ -29,14 +29,14 @@
         <div class="section-heading">
           <div>
             <h2>Nội dung cần tra cứu</h2>
-            <p class="muted">Có thể dán nguyên văn nội dung SMS chứa nhiều mã trạm. Kết quả sẽ tự cập nhật ngay khi nhập.</p>
+            <p class="muted">Có thể dán nguyên văn nội dung SMS chứa nhiều mã trạm. Kết quả sẽ tự cập nhật ngay sau khi nhập.</p>
           </div>
         </div>
 
         <label class="field-label" for="input">Ô nhập nội dung</label>
         <textarea
           id="input"
-          placeholder="Ví dụ: Alarm tại DLBD01 và DLKEWR11 cần kiểm tra gấp..."
+          placeholder="Ví dụ: Alarm tại DLBT09 và DLKEWR11 cần kiểm tra gấp..."
           spellcheck="false"
         ></textarea>
 
@@ -63,7 +63,7 @@
           <table class="results-table">
             <thead>
               <tr>
-                <th>Mã nhận diện</th>
+                <th>Site nhận diện</th>
                 <th>Loại tra cứu</th>
                 <th>Kết quả đối chiếu</th>
                 <th>Trạng thái</th>
