@@ -449,7 +449,7 @@
       logDebounceTimer = setTimeout(() => {
         sendLookupLog(payload);
         lastLoggedSignature = signature;
-      }, 1200);
+      }, 3000);
     }
 
     function sendLookupLog(payload) {
