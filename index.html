@@ -349,6 +349,7 @@
       if (foundCount > 0) {
         scheduleLookupLog({
           event: "lookup",
+          queryKey: buildQueryKey(rows),
           foundCount,
           totalCount: rows.length,
           dataSource: currentDataSource,
@@ -360,6 +361,10 @@
     }
 
     // Resolve either a direct sitename or a cell name that starts with a sitename.
+    function buildQueryKey(rows) {
+      return rows.map((row) => row.input).join("|");
+    }
+
     function resolveLookup(candidate) {
       const directMatch = mapping.get(candidate);
       if (directMatch) {
@@ -453,7 +458,7 @@
 
     // Send a lightweight usage log to Google Apps Script without blocking the UI.
     function scheduleLookupLog(payload) {
-      const signature = JSON.stringify(payload);
+      const signature = payload.queryKey || JSON.stringify(payload);
 
       if (signature === lastLoggedSignature) {
         return;
