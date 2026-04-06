@@ -235,7 +235,7 @@ textarea:focus {
 
 .results-table {
   width: 100%;
-  min-width: 620px;
+  min-width: 680px;
   border-collapse: collapse;
   background: #fff;
   table-layout: fixed;
@@ -294,6 +294,41 @@ textarea:focus {
   font-weight: 600;
 }
 
+/* Priority badge styles */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 7px 12px;
+  letter-spacing: 0.03em;
+}
+
+.prio-ut1 {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.prio-ut2 {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.prio-ut3 {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.prio-unknown {
+  background: #f8fafc;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
 @media (max-width: 720px) {
   .results-container {
     overflow-x: auto;
@@ -329,6 +364,11 @@ textarea:focus {
   }
 
   .table-status {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .priority-badge {
     padding: 4px 8px;
     font-size: 11px;
   }
