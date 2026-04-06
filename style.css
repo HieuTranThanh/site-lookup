@@ -348,8 +348,14 @@ textarea:focus {
     white-space: nowrap; /* mặc định không xuống dòng */
   }
 
-  /* Chỉ cho 1 cột xuống dòng */
-  .results-table td:nth-child(3) {
+  /* Cột xuống dòng */
+  .results-table td:nth-child(2) {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 160px;
+    font-weight: 600;
+  }
+    .results-table td:nth-child(3) {
     white-space: normal;
     word-break: break-word;
     min-width: 160px;
