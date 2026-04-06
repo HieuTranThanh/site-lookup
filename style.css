@@ -357,11 +357,11 @@ textarea:focus {
   }
 
   /* Set độ rộng từng cột */
-  .results-table td:nth-child(1) { width: 70px; }
-  .results-table td:nth-child(2) { width: 70px; }
-  .results-table td:nth-child(3) { width: 120px; }
-  .results-table td:nth-child(4) { width: 70px; }
-  .results-table td:nth-child(5) { width: 70px; }
+  .results-table td:nth-child(1) { width: 60px; }
+  .results-table td:nth-child(2) { width: 60px; }
+  .results-table td:nth-child(3) { width: 100px; }
+  .results-table td:nth-child(4) { width: 60px; }
+  .results-table td:nth-child(5) { width: 60px; }
 
   .code-pill,
   .table-status {
