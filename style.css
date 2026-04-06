@@ -342,7 +342,7 @@ textarea:focus {
 
   .results-table th,
   .results-table td {
-    padding: 8px 6px;
+    padding: 8px 4px;
     font-size: 13px;
     line-height: 1.4;
     white-space: nowrap; /* mặc định không xuống dòng */
