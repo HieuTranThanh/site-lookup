@@ -336,46 +336,37 @@ textarea:focus {
   }
 
   .results-table {
-    min-width: 100%;
-    table-layout: auto;
+    min-width: 650px; /* ép bảng rộng hơn màn hình */
+    table-layout: fixed;
   }
 
   .results-table th,
   .results-table td {
-    padding: 9px 8px;
-    font-size: 12px;
-    line-height: 1.35;
-    word-break: break-word;
+    padding: 8px 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap; /* mặc định không xuống dòng */
   }
 
-  .results-table th {
-    font-size: 11px;
-  }
-
-  .results-table td:nth-child(1),
+  /* Chỉ cho 1 cột xuống dòng */
   .results-table td:nth-child(3) {
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    min-width: 160px;
+    font-weight: 600;
   }
 
-  .code-pill {
-    padding: 4px 8px;
-    font-size: 11px;
-    white-space: nowrap;
-  }
+  /* Set độ rộng từng cột */
+  .results-table td:nth-child(1) { width: 80px; }
+  .results-table td:nth-child(2) { width: 100px; }
+  .results-table td:nth-child(3) { width: 180px; }
+  .results-table td:nth-child(4) { width: 90px; }
+  .results-table td:nth-child(5) { width: 90px; }
 
+  .code-pill,
   .table-status {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-
-  .priority-badge {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-
-  .results-table td:nth-child(3) strong,
-  .results-table td:nth-child(3) .missing-text {
-    white-space: nowrap;
+    font-size: 12px;
+    padding: 5px 8px;
   }
 }
 
