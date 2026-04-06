@@ -66,6 +66,7 @@
                 <th>Site nhận diện</th>
                 <th>Loại tra cứu</th>
                 <th>Kết quả đối chiếu</th>
+                <th>Mức ưu tiên</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
@@ -145,6 +146,7 @@
           const headers = rows[0].map(normalizeHeader);
           const oldIndex = headers.findIndex((header) => header === "sitename cu");
           const newIndex = headers.findIndex((header) => header === "sitename moi");
+          const prioIndex = headers.findIndex((header) => header === "muc uu tien");
 
           if (oldIndex === -1 || newIndex === -1) {
             throw new Error("Không tìm thấy hai cột 'Sitename cũ' và 'Sitename mới' trong Google Sheet.");
@@ -152,7 +154,8 @@
 
           const pairs = rows.slice(1).map((row) => ({
             oldName: normalizeSiteCode(row[oldIndex]),
-            newName: normalizeSiteCode(row[newIndex])
+            newName: normalizeSiteCode(row[newIndex]),
+            priority: prioIndex !== -1 ? (row[prioIndex] || "").trim().toUpperCase() : ""
           }));
 
           const pairCount = fillMappingFromPairs(pairs);
@@ -182,13 +185,14 @@
       (pairs || []).forEach((pair) => {
         const oldName = normalizeSiteCode(pair.oldName);
         const newName = normalizeSiteCode(pair.newName);
+        const priority = (pair.priority || "").trim().toUpperCase() || "—";
 
         if (!oldName || !newName) {
           return;
         }
 
-        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới" });
-        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ" });
+        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới", priority });
+        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ", priority });
       });
 
       return mapping.size / 2;
@@ -266,7 +270,6 @@
     }
 
     // Extract likely site or cell-name tokens from free text input.
-    // MBF_ aliases are kept, while generic underscored ticket IDs remain ignored.
     function extractCandidates(text) {
       const tokens = text.toUpperCase().match(/MBF_[A-Z0-9]+|[A-Z0-9]+/g) || [];
       const unique = [];
@@ -323,11 +326,19 @@
           input: candidate,
           type: match ? resolution.type : "Chưa xác định",
           output: match ? match.counterpart : "Không tìm thấy trong danh sách",
+          priority: match ? match.priority : "—",
           found: Boolean(match)
         };
       });
 
       renderResults(rows);
+    }
+
+    function getPriorityClass(priority) {
+      if (priority === "UT1") return "prio-ut1";
+      if (priority === "UT2") return "prio-ut2";
+      if (priority === "UT3") return "prio-ut3";
+      return "prio-unknown";
     }
 
     function renderResults(rows) {
@@ -336,6 +347,7 @@
           <td data-label="Site nhận diện"><span class="code-pill">${escapeHtml(row.input)}</span></td>
           <td data-label="Loại tra cứu">${escapeHtml(row.type)}</td>
           <td data-label="Kết quả đối chiếu">${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
+          <td data-label="Mức ưu tiên">${row.found ? `<span class="priority-badge ${getPriorityClass(row.priority)}">${escapeHtml(row.priority)}</span>` : `<span class="missing-text">—</span>`}</td>
           <td data-label="Trạng thái"><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
         </tr>
       `).join("");
@@ -360,7 +372,6 @@
       }
     }
 
-    // Resolve either a direct sitename or a cell name that starts with a sitename.
     function buildQueryKey(rows) {
       return rows.map((row) => row.input).join("|");
     }
@@ -388,7 +399,6 @@
       return { match: null, type: null };
     }
 
-    // Prefer the longest matching prefix to avoid ambiguous cell-name matches.
     function findSiteCodeFromCellName(candidate) {
       let bestMatch = null;
 
@@ -418,7 +428,7 @@
 
       const lines = Array.from(resultsBodyEl.querySelectorAll("tr")).map((row) => {
         const cells = row.querySelectorAll("td");
-        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText}`;
+        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText} | ${cells[4].innerText}`;
       });
 
       try {
@@ -448,7 +458,6 @@
       statusTextEl.textContent = detailText;
     }
 
-    // Cancel a pending delayed log when the current input is no longer valid.
     function cancelPendingLookupLog() {
       if (logDebounceTimer) {
         clearTimeout(logDebounceTimer);
@@ -456,7 +465,6 @@
       }
     }
 
-    // Send a lightweight usage log to Google Apps Script without blocking the UI.
     function scheduleLookupLog(payload) {
       const signature = payload.queryKey || JSON.stringify(payload);
 
