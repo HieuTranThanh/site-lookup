@@ -1,5 +1,5 @@
 {
-    "generatedAt": "2026-04-06T00:00:00+07:00",
+    "generatedAt": "2026-04-08T00:00:00+07:00",
     "source": "Google Sheet fallback snapshot",
     "pairCount": 1449,
     "mappings": [
@@ -5105,7 +5105,7 @@
         },
         {
             "oldName": "PYPY26",
-            "newName": "DLKBKN4A",
+            "newName": "DLKBKN26",
             "priority": "UT3"
         },
         {
@@ -6350,7 +6350,7 @@
         },
         {
             "oldName": "PYTH46",
-            "newName": "DLKSTH3A",
+            "newName": "DLKSTH14",
             "priority": "UT2"
         },
         {
@@ -6770,7 +6770,7 @@
         },
         {
             "oldName": "PYPY27",
-            "newName": "DLKTUH4A",
+            "newName": "DLKTUH54",
             "priority": "UT3"
         },
         {
