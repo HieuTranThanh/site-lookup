@@ -67,6 +67,8 @@
                 <th>Loại tra cứu</th>
                 <th>Kết quả đối chiếu</th>
                 <th>Mức ưu tiên</th>
+                <th>Chuyên viên QL</th>
+                <th>Nhân viên ƯCTT</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
@@ -147,6 +149,8 @@
           const oldIndex = headers.findIndex((header) => header === "sitename cu");
           const newIndex = headers.findIndex((header) => header === "sitename moi");
           const prioIndex = headers.findIndex((header) => header === "muc uu tien");
+          const managerIndex = headers.findIndex((header) => header === "chuyen vien ql");
+          const dutyStaffIndex = headers.findIndex((header) => header === "nhan vien uctt");
 
           if (oldIndex === -1 || newIndex === -1) {
             throw new Error("Không tìm thấy hai cột 'Sitename cũ' và 'Sitename mới' trong Google Sheet.");
@@ -155,7 +159,9 @@
           const pairs = rows.slice(1).map((row) => ({
             oldName: normalizeSiteCode(row[oldIndex]),
             newName: normalizeSiteCode(row[newIndex]),
-            priority: prioIndex !== -1 ? (row[prioIndex] || "").trim().toUpperCase() : ""
+            priority: prioIndex !== -1 ? (row[prioIndex] || "").trim().toUpperCase() : "",
+            manager: managerIndex !== -1 ? (row[managerIndex] || "").trim() : "",
+            dutyStaff: dutyStaffIndex !== -1 ? (row[dutyStaffIndex] || "").trim() : ""
           }));
 
           const pairCount = fillMappingFromPairs(pairs);
@@ -186,13 +192,15 @@
         const oldName = normalizeSiteCode(pair.oldName);
         const newName = normalizeSiteCode(pair.newName);
         const priority = (pair.priority || "").trim().toUpperCase() || "—";
+        const manager = (pair.manager || "").trim() || "—";
+        const dutyStaff = (pair.dutyStaff || "").trim() || "—";
 
         if (!oldName || !newName) {
           return;
         }
 
-        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới", priority });
-        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ", priority });
+        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới", priority, manager, dutyStaff });
+        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ", priority, manager, dutyStaff });
       });
 
       return mapping.size / 2;
@@ -327,6 +335,8 @@
           type: match ? resolution.type : "Chưa xác định",
           output: match ? match.counterpart : "Không tìm thấy trong danh sách",
           priority: match ? match.priority : "—",
+          manager: match ? match.manager : "—",
+          dutyStaff: match ? match.dutyStaff : "—",
           found: Boolean(match)
         };
       });
@@ -348,6 +358,8 @@
           <td data-label="Loại tra cứu">${escapeHtml(row.type)}</td>
           <td data-label="Kết quả đối chiếu">${row.found ? `<strong>${escapeHtml(row.output)}</strong>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
           <td data-label="Mức ưu tiên">${row.found ? `<span class="priority-badge ${getPriorityClass(row.priority)}">${escapeHtml(row.priority)}</span>` : `<span class="missing-text">—</span>`}</td>
+          <td data-label="Chuyên viên QL">${row.found ? escapeHtml(row.manager) : `<span class="missing-text">—</span>`}</td>
+          <td data-label="Nhân viên ƯCTT">${row.found ? escapeHtml(row.dutyStaff) : `<span class="missing-text">—</span>`}</td>
           <td data-label="Trạng thái"><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
         </tr>
       `).join("");
@@ -428,7 +440,7 @@
 
       const lines = Array.from(resultsBodyEl.querySelectorAll("tr")).map((row) => {
         const cells = row.querySelectorAll("td");
-        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText} | ${cells[4].innerText}`;
+        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText} | ${cells[4].innerText} | ${cells[5].innerText} | ${cells[6].innerText}`;
       });
 
       try {
