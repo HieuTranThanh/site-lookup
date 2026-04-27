@@ -100,12 +100,15 @@
     const emptyStateEl = document.getElementById("emptyState");
     const resultsContainerEl = document.getElementById("resultsContainer");
     const resultsBodyEl = document.getElementById("resultsBody");
+    const pageShellEl = document.querySelector(".page-shell");
     const headerPanelEl = document.querySelector(".panel-header");
+    const resultsPanelEl = resultsContainerEl.closest(".panel");
+    const resultsTableEl = document.querySelector(".results-table");
 
     copyButton.addEventListener("click", copyResult);
     clearButton.addEventListener("click", clearInput);
     inputEl.addEventListener("input", processLookup);
-    window.addEventListener("resize", syncMobileHeaderWidth);
+    window.addEventListener("resize", syncMobileLayoutWidth);
 
     setLoadingState();
     loadMapping();
@@ -368,7 +371,7 @@
 
       emptyStateEl.hidden = true;
       resultsContainerEl.hidden = false;
-      syncMobileHeaderWidth();
+      syncMobileLayoutWidth();
 
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
@@ -430,18 +433,21 @@
       resultsBodyEl.innerHTML = "";
       resultsContainerEl.hidden = true;
       emptyStateEl.hidden = false;
-      syncMobileHeaderWidth();
+      syncMobileLayoutWidth();
       emptyStateEl.innerHTML = `
         <h3>${escapeHtml(title)}</h3>
         <p>${escapeHtml(description)}</p>
       `;
     }
 
-    function syncMobileHeaderWidth() {
-      if (!headerPanelEl) {
+    function syncMobileLayoutWidth() {
+      if (!pageShellEl || !headerPanelEl || !resultsPanelEl || !resultsTableEl) {
         return;
       }
 
+      pageShellEl.style.width = "";
+      pageShellEl.style.minWidth = "";
+      pageShellEl.style.maxWidth = "";
       headerPanelEl.style.width = "";
       headerPanelEl.style.minWidth = "";
 
@@ -450,10 +456,13 @@
       }
 
       requestAnimationFrame(() => {
-        const targetWidth = resultsContainerEl.offsetWidth;
+        const panelChromeWidth = resultsPanelEl.offsetWidth - resultsContainerEl.offsetWidth;
+        const targetWidth = resultsTableEl.scrollWidth + panelChromeWidth;
+
         if (targetWidth > 0) {
-          headerPanelEl.style.width = `${targetWidth}px`;
-          headerPanelEl.style.minWidth = `${targetWidth}px`;
+          pageShellEl.style.width = `${targetWidth}px`;
+          pageShellEl.style.minWidth = `${targetWidth}px`;
+          pageShellEl.style.maxWidth = "none";
         }
       });
     }
