@@ -333,18 +333,6 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
-  .page-shell,
-  .panel,
-  .panel-header {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  .panel-header {
-    padding: 18px;
-  }
-
   .intro {
     max-width: none;
   }
@@ -366,9 +354,6 @@ textarea:focus {
   }
 
   .results-container {
-    display: block;
-    width: 100%;
-    max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
   }
