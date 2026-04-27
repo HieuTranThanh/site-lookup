@@ -100,10 +100,12 @@
     const emptyStateEl = document.getElementById("emptyState");
     const resultsContainerEl = document.getElementById("resultsContainer");
     const resultsBodyEl = document.getElementById("resultsBody");
+    const headerPanelEl = document.querySelector(".panel-header");
 
     copyButton.addEventListener("click", copyResult);
     clearButton.addEventListener("click", clearInput);
     inputEl.addEventListener("input", processLookup);
+    window.addEventListener("resize", syncMobileHeaderWidth);
 
     setLoadingState();
     loadMapping();
@@ -366,6 +368,7 @@
 
       emptyStateEl.hidden = true;
       resultsContainerEl.hidden = false;
+      syncMobileHeaderWidth();
 
       const foundCount = rows.filter((row) => row.found).length;
       summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
@@ -427,10 +430,32 @@
       resultsBodyEl.innerHTML = "";
       resultsContainerEl.hidden = true;
       emptyStateEl.hidden = false;
+      syncMobileHeaderWidth();
       emptyStateEl.innerHTML = `
         <h3>${escapeHtml(title)}</h3>
         <p>${escapeHtml(description)}</p>
       `;
+    }
+
+    function syncMobileHeaderWidth() {
+      if (!headerPanelEl) {
+        return;
+      }
+
+      headerPanelEl.style.width = "";
+      headerPanelEl.style.minWidth = "";
+
+      if (!window.matchMedia("(max-width: 720px)").matches || resultsContainerEl.hidden) {
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        const targetWidth = resultsContainerEl.offsetWidth;
+        if (targetWidth > 0) {
+          headerPanelEl.style.width = `${targetWidth}px`;
+          headerPanelEl.style.minWidth = `${targetWidth}px`;
+        }
+      });
     }
 
     async function copyResult() {
