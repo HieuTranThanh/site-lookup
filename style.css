@@ -32,6 +32,7 @@ body {
 .content-stack {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .panel {
@@ -40,6 +41,7 @@ body {
   border-radius: 16px;
   box-shadow: var(--shadow);
   padding: 16px;
+  min-width: 0;
 }
 
 .panel-header {
@@ -331,8 +333,15 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
+  .page-shell,
+  .panel,
   .panel-header {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .panel-header {
     padding: 18px;
   }
 
@@ -357,6 +366,9 @@ textarea:focus {
   }
 
   .results-container {
+    display: block;
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
   }
