@@ -44,6 +44,7 @@ body {
 
 .panel-header {
   margin-bottom: 14px;
+  width: 100%;
 }
 
 .eyebrow {
@@ -330,6 +331,31 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
+  .panel-header {
+    width: 100%;
+    padding: 18px;
+  }
+
+  .intro {
+    max-width: none;
+  }
+
+  .header-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .status-badge,
+  .meta-item {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .status-text {
+    max-width: none;
+  }
+
   .results-container {
     overflow-x: auto;
     overflow-y: hidden;
