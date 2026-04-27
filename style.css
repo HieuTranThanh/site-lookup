@@ -235,7 +235,7 @@ textarea:focus {
 
 .results-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1080px;
   border-collapse: collapse;
   background: #fff;
   table-layout: fixed;
@@ -336,7 +336,7 @@ textarea:focus {
   }
 
   .results-table {
-    min-width: 920px;
+    min-width: 1040px;
     table-layout: fixed;
   }
 
@@ -359,15 +359,15 @@ textarea:focus {
   .results-table td:nth-child(6) {
     white-space: normal;
     word-break: break-word;
-    min-width: 160px;
+    min-width: 190px;
   }
 
   .results-table td:nth-child(1) { width: 115px; }
   .results-table td:nth-child(2) { width: 150px; }
   .results-table td:nth-child(3) { width: 150px; }
   .results-table td:nth-child(4) { width: 90px; }
-  .results-table td:nth-child(5) { width: 150px; }
-  .results-table td:nth-child(6) { width: 150px; }
+  .results-table td:nth-child(5) { width: 190px; }
+  .results-table td:nth-child(6) { width: 190px; }
   .results-table td:nth-child(7) { width: 110px; }
 
   .code-pill,
