@@ -354,8 +354,7 @@ textarea:focus {
   }
 
   .results-container {
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible;
   }
 
   .results-table {
