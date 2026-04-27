@@ -235,7 +235,7 @@ textarea:focus {
 
 .results-table {
   width: 100%;
-  min-width: 680px;
+  min-width: 980px;
   border-collapse: collapse;
   background: #fff;
   table-layout: fixed;
@@ -336,38 +336,39 @@ textarea:focus {
   }
 
   .results-table {
-    min-width: 650px; /* ép bảng rộng hơn màn hình */
+    min-width: 920px;
     table-layout: fixed;
   }
 
   .results-table th,
   .results-table td {
     padding: 8px 4px;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.4;
-    white-space: nowrap; /* mặc định không xuống dòng */
+    white-space: nowrap;
   }
 
-  /* Cột xuống dòng */
   .results-table td:nth-child(2) {
     white-space: normal;
     word-break: break-word;
     min-width: 160px;
     font-weight: 600;
   }
-    .results-table td:nth-child(3) {
+  .results-table td:nth-child(3),
+  .results-table td:nth-child(5),
+  .results-table td:nth-child(6) {
     white-space: normal;
     word-break: break-word;
     min-width: 160px;
-    font-weight: 600;
   }
 
-  /* Set độ rộng từng cột */
-  .results-table td:nth-child(1) { width: 60px; }
-  .results-table td:nth-child(2) { width: 60px; }
-  .results-table td:nth-child(3) { width: 100px; }
-  .results-table td:nth-child(4) { width: 60px; }
-  .results-table td:nth-child(5) { width: 60px; }
+  .results-table td:nth-child(1) { width: 115px; }
+  .results-table td:nth-child(2) { width: 150px; }
+  .results-table td:nth-child(3) { width: 150px; }
+  .results-table td:nth-child(4) { width: 90px; }
+  .results-table td:nth-child(5) { width: 150px; }
+  .results-table td:nth-child(6) { width: 150px; }
+  .results-table td:nth-child(7) { width: 110px; }
 
   .code-pill,
   .table-status {
