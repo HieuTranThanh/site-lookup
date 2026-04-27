@@ -246,7 +246,7 @@ textarea:focus {
   padding: 14px 16px;
   text-align: left;
   border-bottom: 1px solid #ecf1f6;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .results-table th {
