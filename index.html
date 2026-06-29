@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com;">
+  <title>MobiFone Site Lookup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <!-- ── Header ── -->
+    <header class="panel-header">
+      <div class="header-top">
+        <div class="header-brand">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="header-titles">
+            <p class="eyebrow">Phòng Viễn Thông<br>Web app tra cứu Sitename</p>
+            <h1>MobiFone Site Lookup</h1>
+          </div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" title="Chuyển giao diện sáng/tối" aria-label="Chuyển giao diện sáng/tối" aria-pressed="false">
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+
+      <p class="intro">
+        Dán SMS alarm hoặc nội dung chứa site cần tra cứu vào ô bên dưới. Hệ thống tự nhận diện mã trạm và trả kết quả đối chiếu cùng thông tin ưu tiên, chuyên viên quản lý và nhân viên ƯCTT.
+      </p>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-icon icon-status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Trạng thái</div>
+            <div class="stat-value"><span id="statusBadge" class="status-badge loading">Đang tải dữ liệu</span></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-count">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Tổng site mapping</div>
+            <div class="stat-value" id="siteCount">0</div>
+          </div>
+        </div>
+        <div class="stat-card" id="dataTimestamp" hidden>
+          <div class="stat-icon icon-time">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Cập nhật lần cuối</div>
+            <div class="stat-value" id="dataTime">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <p id="statusText" class="status-text">Đang đọc mapping.json...</p>
+    </header>
+
+    <!-- ── Main Content ── -->
+    <main class="content-stack">
+      <!-- Input Section -->
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <h2>Nội dung cần tra cứu</h2>
+            <p class="muted">Dán nguyên văn SMS mất sóng/mất điện/chạy MPĐ chứa nhiều mã trạm. Kết quả cập nhật ngay khi nhập.</p>
+          </div>
+        </div>
+
+        <label class="field-label" for="input">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          Ô nhập nội dung
+        </label>
+        <textarea
+          id="input"
+          placeholder="Ví dụ: Alarm tại DLBT09 và DLKEWR11 cần kiểm tra gấp..."
+          spellcheck="false"
+        ></textarea>
+
+        <div class="actions">
+          <button id="clearButton" class="btn btn-ghost" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Xóa nội dung
+          </button>
+        </div>
+      </section>
+
+      <!-- Results Section -->
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <h2>Kết quả tra cứu</h2>
+            <p id="summaryText" class="muted" aria-live="polite">Chưa có dữ liệu tra cứu</p>
+          </div>
+          <div class="copy-actions">
+            <button id="copyPairsButton" class="btn btn-primary" type="button" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              Copy cặp Site
+            </button>
+            <button id="copyButton" class="btn btn-secondary" type="button" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy bảng
+            </button>
+          </div>
+        </div>
+
+        <div id="filterBar" class="filter-bar" hidden>
+          <div class="filter-group">
+            <span class="filter-label">Chuyên viên QL:</span>
+            <div class="filter-dropdown" id="managerFilter">
+              <button type="button" class="filter-toggle" id="managerFilterToggle">Tất cả</button>
+              <div class="filter-menu" id="managerFilterMenu" hidden></div>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Nhân viên ƯCTT:</span>
+            <div class="filter-dropdown" id="dutyStaffFilter">
+              <button type="button" class="filter-toggle" id="dutyStaffFilterToggle">Tất cả</button>
+              <div class="filter-menu" id="dutyStaffFilterMenu" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+          <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <h3>Sẵn sàng tra cứu</h3>
+          <p>Dán nội dung cần kiểm tra vào ô phía trên, hệ thống sẽ tự động hiển thị kết quả.</p>
+        </div>
+
+        <div id="resultsContainer" class="results-container" hidden aria-live="polite">
+          <table class="results-table">
+            <colgroup>
+              <col><col><col><col><col><col><col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="sortable" data-key="input">Site nhận diện</th>
+                <th class="sortable" data-key="type">Loại tra cứu</th>
+                <th class="sortable" data-key="output">KQ đối chiếu</th>
+                <th class="sortable" data-key="priority">Mức ưu tiên</th>
+                <th class="sortable" data-key="manager">Chuyên viên QL</th>
+                <th class="sortable" data-key="dutyStaff">NV ƯCTT</th>
+                <th class="sortable" data-key="found">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Old District Lookup Section -->
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <h2>Tra cứu mã trạm theo huyện cũ</h2>
+            <p class="muted">Chọn Quận/Huyện cũ hoặc Chuyên viên QL để xem bảng đối chiếu mã trạm.</p>
+          </div>
+        </div>
+
+        <div class="hc-filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Quận/Huyện cũ:</span>
+            <div class="filter-dropdown" id="hcDistrictFilter">
+              <button type="button" class="filter-toggle" id="hcDistrictToggle">-- Chọn --</button>
+              <div class="filter-menu" id="hcDistrictMenu" hidden></div>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Chuyên viên QL:</span>
+            <div class="filter-dropdown" id="hcManagerFilter">
+              <button type="button" class="filter-toggle" id="hcManagerToggle">-- Chọn --</button>
+              <div class="filter-menu" id="hcManagerMenu" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="hcEmptyState" class="empty-state">
+          <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <h3>Chọn bộ lọc để xem dữ liệu</h3>
+          <p>Chọn Quận/Huyện cũ hoặc Chuyên viên QL từ bộ lọc phía trên để hiển thị bảng đối chiếu mã trạm.</p>
+        </div>
+
+        <div id="hcResultsContainer" class="results-container" hidden>
+          <table class="results-table hc-table">
+            <colgroup>
+              <col><col><col><col><col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Quận/Huyện cũ</th>
+                <th>Chuyên viên QL</th>
+                <th>Mã Site ID cũ</th>
+                <th>Phường/Xã mới</th>
+                <th>Mã Site ID mới</th>
+              </tr>
+            </thead>
+            <tbody id="hcResultsBody"></tbody>
+          </table>
+        </div>
+
+        <p id="hcSummary" class="muted hc-summary" hidden></p>
+      </section>
+    </main>
+
+    <footer class="page-footer">© 2026 Hieu.TranThanh</footer>
+  </div>
+
+  <script>
+    const JSON_URL = "./mapping.json";
+    // Để tắt log: xóa trắng URL bên dưới (để ""). Để bật lại: paste URL Apps Script vào.
+    const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbzvtxzya3PBCleK2cEuqeBYFZucEY8aJrqd_a9E9DiZYCot80bjKMc390mzrtZPuy71Tw/exec";
+
+    const mapping = new Map();
+    let dataReady = false;
+    let currentDataSource = "";
+    let logDebounceTimer = null;
+    let lastLoggedSignature = "";
+    let currentRows = [];
+    let filteredRows = [];
+    let selectedManagers = new Set();
+    let selectedDutyStaff = new Set();
+    let allManagers = [];
+    let allDutyStaff = [];
+    let sortState = { key: null, asc: true };
+
+    const inputEl = document.getElementById("input");
+    const copyButton = document.getElementById("copyButton");
+    const copyPairsButton = document.getElementById("copyPairsButton");
+    const clearButton = document.getElementById("clearButton");
+    const statusBadgeEl = document.getElementById("statusBadge");
+    const statusTextEl = document.getElementById("statusText");
+    const siteCountEl = document.getElementById("siteCount");
+    const dataTimestampEl = document.getElementById("dataTimestamp");
+    const dataTimeEl = document.getElementById("dataTime");
+    const summaryTextEl = document.getElementById("summaryText");
+    const emptyStateEl = document.getElementById("emptyState");
+    const resultsContainerEl = document.getElementById("resultsContainer");
+    const resultsBodyEl = document.getElementById("resultsBody");
+    const filterBarEl = document.getElementById("filterBar");
+    const managerFilterToggleEl = document.getElementById("managerFilterToggle");
+    const managerFilterMenuEl = document.getElementById("managerFilterMenu");
+    const dutyStaffFilterToggleEl = document.getElementById("dutyStaffFilterToggle");
+    const dutyStaffFilterMenuEl = document.getElementById("dutyStaffFilterMenu");
+    const themeToggleEl = document.getElementById("themeToggle");
+
+    copyButton.addEventListener("click", copyResult);
+    copyPairsButton.addEventListener("click", copyPairs);
+    clearButton.addEventListener("click", clearInput);
+    inputEl.addEventListener("input", processLookup);
+    document.querySelectorAll(".sortable").forEach((th) => {
+      th.tabIndex = 0;
+      th.setAttribute("role", "button");
+      th.setAttribute("aria-sort", "none");
+      th.addEventListener("click", () => handleSort(th.dataset.key));
+      th.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleSort(th.dataset.key);
+        }
+      });
+    });
+    managerFilterToggleEl.addEventListener("click", () => {
+      managerFilterMenuEl.hidden = !managerFilterMenuEl.hidden;
+      dutyStaffFilterMenuEl.hidden = true;
+    });
+    dutyStaffFilterToggleEl.addEventListener("click", () => {
+      dutyStaffFilterMenuEl.hidden = !dutyStaffFilterMenuEl.hidden;
+      managerFilterMenuEl.hidden = true;
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".filter-dropdown")) {
+        managerFilterMenuEl.hidden = true;
+        dutyStaffFilterMenuEl.hidden = true;
+      }
+    });
+
+    // Dark mode
+    function initTheme() {
+      const saved = localStorage.getItem("site-lookup-theme");
+      if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+      themeToggleEl.setAttribute("aria-pressed", String(document.documentElement.getAttribute("data-theme") === "dark"));
+    }
+
+    themeToggleEl.addEventListener("click", () => {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        document.documentElement.removeAttribute("data-theme");
+        localStorage.setItem("site-lookup-theme", "light");
+      } else {
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("site-lookup-theme", "dark");
+      }
+      themeToggleEl.setAttribute("aria-pressed", String(!isDark));
+    });
+
+    initTheme();
+
+    setLoadingState();
+    loadMapping();
+
+    async function loadMapping() {
+      mapping.clear();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const response = await fetch(JSON_URL, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) {
+          throw new Error("Không thể tải file mapping.json.");
+        }
+
+        const data = await response.json();
+        const pairCount = fillMappingFromPairs(data.mappings || []);
+
+        if (!pairCount) {
+          throw new Error("mapping.json không có dữ liệu hợp lệ.");
+        }
+
+        dataReady = true;
+        currentDataSource = "mapping.json";
+        siteCountEl.textContent = pairCount.toLocaleString("vi-VN");
+        showDataTimestamp(data.generatedAt);
+        setStatus("ready", "Sẵn sàng", "Đã tải dữ liệu từ mapping.json.");
+        processLookup();
+      } catch (error) {
+        console.error("Lỗi tải mapping.json:", error);
+        dataReady = false;
+        currentDataSource = "";
+        const detail = error.name === "AbortError"
+          ? "Quá thời gian tải dữ liệu mapping.json. Kiểm tra kết nối và tải lại trang."
+          : (error.message || "Không thể đọc file mapping.json.");
+        setStatus("error", "Tải dữ liệu thất bại", detail);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function showDataTimestamp(isoString) {
+      if (!isoString) return;
+      try {
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return;
+        const formatted = date.toLocaleString("vi-VN", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+        dataTimeEl.textContent = formatted;
+        dataTimestampEl.hidden = false;
+      } catch (_) {}
+    }
+
+    function fillMappingFromPairs(pairs) {
+      mapping.clear();
+      let pairCount = 0;
+
+      pairs.forEach((pair) => {
+        const oldName = normalizeSiteCode(pair.oldName);
+        const newName = normalizeSiteCode(pair.newName);
+        const priority = (pair.priority || "").trim().toUpperCase() || "—";
+        const manager = (pair.manager || "").trim() || "—";
+        const dutyStaff = (pair.dutyStaff || "").trim() || "—";
+
+        if (!oldName || !newName || oldName === newName) {
+          return;
+        }
+
+        mapping.set(oldName, { counterpart: newName, direction: "Cũ → Mới", priority, manager, dutyStaff });
+        mapping.set(newName, { counterpart: oldName, direction: "Mới → Cũ", priority, manager, dutyStaff });
+        pairCount += 1;
+      });
+
+      return pairCount;
+    }
+
+    function normalizeSiteCode(value) {
+      return (value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "");
+    }
+
+    function extractCandidates(text) {
+      const tokens = text.toUpperCase().match(/MBF_[A-Z0-9]+|[A-Z0-9]+/g) || [];
+      const unique = [];
+      const seen = new Set();
+
+      tokens.forEach((token) => {
+        if (token.length < 4) {
+          return;
+        }
+
+        if (!/[A-Z]/.test(token) || !/\d/.test(token)) {
+          return;
+        }
+
+        if (!seen.has(token)) {
+          seen.add(token);
+          unique.push(token);
+        }
+      });
+
+      return unique;
+    }
+
+    function processLookup() {
+      const text = inputEl.value || "";
+      const candidates = extractCandidates(text);
+
+      if (!text.trim()) {
+        cancelPendingLookupLog();
+        renderEmptyState("Sẵn sàng tra cứu", "Dán nội dung cần kiểm tra vào ô phía trên, hệ thống sẽ tự động hiển thị kết quả.");
+        summaryTextEl.textContent = "Chưa có dữ liệu tra cứu";
+        return;
+      }
+
+      if (!dataReady) {
+        cancelPendingLookupLog();
+        renderEmptyState("Đang chờ dữ liệu mapping", "Hệ thống chưa tải xong dữ liệu. Vui lòng đợi trong giây lát.");
+        summaryTextEl.textContent = "Đang chờ dữ liệu mapping";
+        return;
+      }
+
+      if (candidates.length === 0) {
+        cancelPendingLookupLog();
+        renderEmptyState("Không nhận diện được mã trạm", "Không tìm thấy chuỗi phù hợp với định dạng sitename trong nội dung vừa nhập.");
+        summaryTextEl.textContent = "Không có mã trạm hợp lệ";
+        return;
+      }
+
+      const rows = candidates.map((candidate) => {
+        const resolution = resolveLookup(candidate);
+        const match = resolution.match;
+
+        return {
+          input: candidate,
+          type: match ? resolution.type : "Chưa xác định",
+          output: match ? match.counterpart : "Không tìm thấy trong danh sách",
+          priority: match ? match.priority : "—",
+          manager: match ? match.manager : "—",
+          dutyStaff: match ? match.dutyStaff : "—",
+          found: Boolean(match)
+        };
+      });
+
+      rows.sort((a, b) => {
+        if (a.found !== b.found) return a.found ? -1 : 1;
+        return a.manager.localeCompare(b.manager, "vi");
+      });
+
+      currentRows = rows;
+      sortState = { key: null, asc: true };
+      updateSortIndicators();
+      buildFilters();
+      applyFilter();
+
+      const foundCount = rows.filter((row) => row.found).length;
+      if (foundCount > 0) {
+        scheduleLookupLog({
+          event: "lookup",
+          queryKey: buildQueryKey(rows),
+          foundCount,
+          totalCount: rows.length,
+          dataSource: currentDataSource,
+          userAgent: navigator.userAgent
+        });
+      } else {
+        cancelPendingLookupLog();
+      }
+    }
+
+    function handleSort(key) {
+      if (!currentRows.length) return;
+      if (sortState.key === key) {
+        sortState.asc = !sortState.asc;
+      } else {
+        sortState = { key, asc: true };
+      }
+
+      const dir = sortState.asc ? 1 : -1;
+      currentRows.sort((a, b) => {
+        if (key === "found") {
+          return (a.found === b.found ? 0 : a.found ? -1 : 1) * dir;
+        }
+        return a[key].localeCompare(b[key], "vi") * dir;
+      });
+
+      updateSortIndicators();
+      applyFilter();
+    }
+
+    function updateSortIndicators() {
+      document.querySelectorAll(".sortable").forEach((th) => {
+        th.classList.remove("sort-asc", "sort-desc");
+        if (th.dataset.key === sortState.key) {
+          th.classList.add(sortState.asc ? "sort-asc" : "sort-desc");
+          th.setAttribute("aria-sort", sortState.asc ? "ascending" : "descending");
+        } else {
+          th.setAttribute("aria-sort", "none");
+        }
+      });
+    }
+
+    const PRIORITY_CLASSES = { UT1: "prio-ut1", UT2: "prio-ut2", UT3: "prio-ut3" };
+
+    function getPriorityClass(priority) {
+      return PRIORITY_CLASSES[priority] || "prio-unknown";
+    }
+
+    function buildFilters() {
+      const foundRows = currentRows.filter((r) => r.found);
+      allManagers = [...new Set(foundRows.map((r) => r.manager))].sort((a, b) => a.localeCompare(b, "vi"));
+      allDutyStaff = [...new Set(foundRows.map((r) => r.dutyStaff))].sort((a, b) => a.localeCompare(b, "vi"));
+
+      // Mặc định: chọn hết (ý định người dùng = tất cả). Set luôn đầy đủ, không dùng quy ước rỗng="tất cả".
+      selectedManagers = new Set(allManagers);
+      selectedDutyStaff = new Set(allDutyStaff);
+
+      if (allManagers.length <= 1 && allDutyStaff.length <= 1) {
+        filterBarEl.hidden = true;
+        return;
+      }
+
+      populateFilterMenu(managerFilterMenuEl, allManagers);
+      populateFilterMenu(dutyStaffFilterMenuEl, allDutyStaff);
+      filterBarEl.hidden = false;
+      refreshLookupMenus();
+    }
+
+    // Dùng chung cho cả bộ lọc tra cứu và huyện cũ. Trạng thái checkbox do renderMenu
+    // quyết định (theo selectedSet/availSet), nên ở đây không gán checked tĩnh.
+    function populateFilterMenu(menuEl, values) {
+      menuEl.innerHTML = `
+        <div class="filter-menu-actions">
+          <label class="filter-action-item">
+            <input type="checkbox" value="__all__">
+            <span>Chọn tất cả</span>
+          </label>
+          <button type="button" class="filter-clear-btn" data-action="clear">Xóa tất cả</button>
+        </div>
+        ${values.map((v) => `
+          <label class="filter-option">
+            <input type="checkbox" value="${escapeHtml(v)}">
+            <span>${escapeHtml(v)}</span>
+          </label>
+        `).join("")}
+      `;
+    }
+
+    // ── Bộ render menu dùng chung ──
+    // selectedSet = ý định người dùng (chỉ thay đổi khi user thao tác trực tiếp menu này).
+    // availSet    = item nào còn khả dụng theo cross-filter (chỉ để ẩn/hiện, KHÔNG ghi vào ý định).
+    function renderMenu(menuEl, toggleEl, allValues, selectedSet, availSet, emptyLabel, unit) {
+      const itemCbs = [...menuEl.querySelectorAll('input:not([value="__all__"])')];
+      itemCbs.forEach((cb) => {
+        const available = availSet.has(cb.value);
+        cb.disabled = !available;
+        cb.closest(".filter-option").classList.toggle("disabled", !available);
+        cb.checked = selectedSet.has(cb.value);
+      });
+
+      const availValues = allValues.filter((v) => availSet.has(v));
+      const allCb = menuEl.querySelector('input[value="__all__"]');
+      allCb.checked = availValues.length > 0 && availValues.every((v) => selectedSet.has(v));
+      allCb.disabled = availValues.length === 0;
+
+      const selectedVisible = availValues.filter((v) => selectedSet.has(v));
+      if (selectedVisible.length === 0) {
+        toggleEl.textContent = emptyLabel;
+      } else if (selectedVisible.length === availValues.length && availValues.length > 1) {
+        toggleEl.textContent = "Tất cả";
+      } else if (selectedVisible.length === 1) {
+        toggleEl.textContent = selectedVisible[0];
+      } else {
+        toggleEl.textContent = `${selectedVisible.length} ${unit}`;
+      }
+    }
+
+    // "Chọn/Xóa tất cả" chỉ tác động item đang khả dụng (availSet), không đụng item bị ẩn.
+    function applySelection(selectedSet, availSet, value, isAll, checked) {
+      if (isAll) {
+        availSet.forEach((v) => { if (checked) selectedSet.add(v); else selectedSet.delete(v); });
+      } else if (checked) {
+        selectedSet.add(value);
+      } else {
+        selectedSet.delete(value);
+      }
+    }
+
+    // Availability mỗi menu phụ thuộc lựa chọn của menu CÒN LẠI.
+    function lookupAvailManagers() {
+      return new Set(currentRows.filter((r) => r.found && selectedDutyStaff.has(r.dutyStaff)).map((r) => r.manager));
+    }
+    function lookupAvailDutyStaff() {
+      return new Set(currentRows.filter((r) => r.found && selectedManagers.has(r.manager)).map((r) => r.dutyStaff));
+    }
+
+    function refreshLookupMenus() {
+      renderMenu(managerFilterMenuEl, managerFilterToggleEl, allManagers, selectedManagers, lookupAvailManagers(), "-- Chọn --", "người");
+      renderMenu(dutyStaffFilterMenuEl, dutyStaffFilterToggleEl, allDutyStaff, selectedDutyStaff, lookupAvailDutyStaff(), "-- Chọn --", "người");
+    }
+
+    function onManagerChange(value, isAll, checked) {
+      applySelection(selectedManagers, lookupAvailManagers(), value, isAll, checked);
+      refreshLookupMenus();
+      applyFilter();
+    }
+    function onDutyStaffChange(value, isAll, checked) {
+      applySelection(selectedDutyStaff, lookupAvailDutyStaff(), value, isAll, checked);
+      refreshLookupMenus();
+      applyFilter();
+    }
+
+    managerFilterMenuEl.addEventListener("change", (e) => {
+      if (e.target.type !== "checkbox") return;
+      onManagerChange(e.target.value, e.target.value === "__all__", e.target.checked);
+    });
+    dutyStaffFilterMenuEl.addEventListener("change", (e) => {
+      if (e.target.type !== "checkbox") return;
+      onDutyStaffChange(e.target.value, e.target.value === "__all__", e.target.checked);
+    });
+    managerFilterMenuEl.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action="clear"]')) onManagerChange(null, true, false);
+    });
+    dutyStaffFilterMenuEl.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action="clear"]')) onDutyStaffChange(null, true, false);
+    });
+
+    function applyFilter() {
+      // Set luôn đầy đủ → rỗng nghĩa là "không chọn gì" → loại hết dòng found.
+      filteredRows = currentRows.filter((row) => {
+        if (!row.found) return true;
+        return selectedManagers.has(row.manager) && selectedDutyStaff.has(row.dutyStaff);
+      });
+      renderResults(filteredRows);
+    }
+
+    function renderResults(rows) {
+      resultsBodyEl.innerHTML = rows.map((row) => `
+        <tr class="${row.found ? 'row-found' : 'row-missing'}">
+          <td data-label="Site nhận diện"><span class="code-pill">${escapeHtml(row.input)}</span></td>
+          <td data-label="Loại tra cứu">${escapeHtml(row.type)}</td>
+          <td data-label="Kết quả đối chiếu">${row.found ? `<span class="result-output">${escapeHtml(row.output)}</span>` : `<span class="missing-text">${escapeHtml(row.output)}</span>`}</td>
+          <td data-label="Mức ưu tiên">${row.found ? `<span class="priority-badge ${getPriorityClass(row.priority)}">${escapeHtml(row.priority)}</span>` : `<span class="missing-text">—</span>`}</td>
+          <td data-label="Chuyên viên QL">${row.found ? escapeHtml(row.manager) : `<span class="missing-text">—</span>`}</td>
+          <td data-label="Nhân viên ƯCTT">${row.found ? escapeHtml(row.dutyStaff) : `<span class="missing-text">—</span>`}</td>
+          <td data-label="Trạng thái"><span class="table-status ${row.found ? "ok" : "missing"}">${row.found ? "Đã đối chiếu" : "Không tìm thấy"}</span></td>
+        </tr>
+      `).join("");
+
+      emptyStateEl.hidden = true;
+      resultsContainerEl.hidden = false;
+      copyButton.disabled = false;
+      copyPairsButton.disabled = !rows.some((row) => row.found);
+
+      const foundCount = rows.filter((row) => row.found).length;
+      summaryTextEl.textContent = `Tìm thấy ${foundCount}/${rows.length} mã trạm`;
+    }
+
+    function buildQueryKey(rows) {
+      return rows.map((row) => row.input).join("|");
+    }
+
+    function resolveLookup(candidate) {
+      const directMatch = mapping.get(candidate);
+      if (directMatch) {
+        return {
+          match: directMatch,
+          type: directMatch.direction
+        };
+      }
+
+      const siteFromCellName = findSiteCodeFromCellName(candidate);
+      if (siteFromCellName) {
+        const cellMatch = mapping.get(siteFromCellName);
+        if (cellMatch) {
+          return {
+            match: cellMatch,
+            type: `${cellMatch.direction} (từ cell name)`
+          };
+        }
+      }
+
+      return { match: null, type: null };
+    }
+
+    function findSiteCodeFromCellName(candidate) {
+      let bestMatch = null;
+
+      for (const siteCode of mapping.keys()) {
+        if (candidate.startsWith(siteCode) && (!bestMatch || siteCode.length > bestMatch.length)) {
+          bestMatch = siteCode;
+        }
+      }
+
+      return bestMatch;
+    }
+
+    function renderEmptyState(title, description) {
+      resultsBodyEl.innerHTML = "";
+      resultsContainerEl.hidden = true;
+      emptyStateEl.hidden = false;
+      filterBarEl.hidden = true;
+      copyButton.disabled = true;
+      copyPairsButton.disabled = true;
+      const h3 = emptyStateEl.querySelector("h3");
+      const p = emptyStateEl.querySelector("p");
+      if (h3) h3.textContent = title;
+      if (p) p.textContent = description;
+    }
+
+    async function copyResult() {
+      if (resultsContainerEl.hidden) {
+        return;
+      }
+
+      const lines = Array.from(resultsBodyEl.querySelectorAll("tr")).map((row) => {
+        const cells = row.querySelectorAll("td");
+        return `${cells[0].innerText} | ${cells[1].innerText} | ${cells[2].innerText} | ${cells[3].innerText} | ${cells[4].innerText} | ${cells[5].innerText} | ${cells[6].innerText}`;
+      });
+
+      try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        setStatus("ready", "Đã copy kết quả", "Nội dung kết quả đã được copy vào clipboard.");
+      } catch (error) {
+        console.error(error);
+        setStatus("error", "Không copy được", "Trình duyệt không cấp quyền clipboard. Hãy copy thủ công trong bảng kết quả.");
+      }
+    }
+
+    async function copyPairs() {
+      const pairs = filteredRows
+        .filter((row) => row.found)
+        .map((row) => `${row.input} → ${row.output}`);
+
+      if (!pairs.length) return;
+
+      try {
+        await navigator.clipboard.writeText(pairs.join("\n"));
+        setStatus("ready", "Đã copy cặp Site", `Đã copy ${pairs.length} cặp Site cũ → mới vào clipboard.`);
+      } catch (error) {
+        console.error(error);
+        setStatus("error", "Không copy được", "Trình duyệt không cấp quyền clipboard. Hãy copy thủ công.");
+      }
+    }
+
+    function clearInput() {
+      cancelPendingLookupLog();
+      inputEl.value = "";
+      processLookup();
+      inputEl.focus();
+    }
+
+    function setLoadingState() {
+      setStatus("loading", "Đang tải dữ liệu", "Đang đọc mapping.json...");
+      siteCountEl.textContent = "0";
+    }
+
+    function setStatus(mode, badgeText, detailText) {
+      statusBadgeEl.className = `status-badge ${mode}`;
+      statusBadgeEl.textContent = badgeText;
+      statusTextEl.textContent = detailText;
+    }
+
+    function cancelPendingLookupLog() {
+      if (logDebounceTimer) {
+        clearTimeout(logDebounceTimer);
+        logDebounceTimer = null;
+      }
+    }
+
+    function scheduleLookupLog(payload) {
+      const signature = payload.queryKey || JSON.stringify(payload);
+
+      if (signature === lastLoggedSignature) {
+        return;
+      }
+
+      cancelPendingLookupLog();
+
+      logDebounceTimer = setTimeout(() => {
+        sendLookupLog(payload);
+        lastLoggedSignature = signature;
+        logDebounceTimer = null;
+      }, 3000);
+    }
+
+    function sendLookupLog(payload) {
+      if (!LOG_ENDPOINT) {
+        return;
+      }
+
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      }).catch((error) => {
+        console.error("Log error:", error);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // ── Old District Lookup ──
+    const HC_JSON_URL = "./huyen_cu.json";
+    let hcRecords = [];
+    let hcSelectedManagers = new Set();
+    let hcSelectedDistricts = new Set();
+    let allHcManagers = [];
+    let allHcDistricts = [];
+
+    const hcManagerToggleEl = document.getElementById("hcManagerToggle");
+    const hcManagerMenuEl = document.getElementById("hcManagerMenu");
+    const hcDistrictToggleEl = document.getElementById("hcDistrictToggle");
+    const hcDistrictMenuEl = document.getElementById("hcDistrictMenu");
+    const hcEmptyStateEl = document.getElementById("hcEmptyState");
+    const hcResultsContainerEl = document.getElementById("hcResultsContainer");
+    const hcResultsBodyEl = document.getElementById("hcResultsBody");
+    const hcSummaryEl = document.getElementById("hcSummary");
+
+    hcManagerToggleEl.addEventListener("click", () => {
+      hcManagerMenuEl.hidden = !hcManagerMenuEl.hidden;
+      hcDistrictMenuEl.hidden = true;
+    });
+    hcDistrictToggleEl.addEventListener("click", () => {
+      hcDistrictMenuEl.hidden = !hcDistrictMenuEl.hidden;
+      hcManagerMenuEl.hidden = true;
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#hcManagerFilter")) hcManagerMenuEl.hidden = true;
+      if (!e.target.closest("#hcDistrictFilter")) hcDistrictMenuEl.hidden = true;
+    });
+
+    loadHuyenCu();
+
+    async function loadHuyenCu() {
+      try {
+        const response = await fetch(HC_JSON_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        hcRecords = data.records || [];
+        buildHcFilters();
+      } catch (error) {
+        console.error("Lỗi tải huyen_cu.json:", error);
+      }
+    }
+
+    function buildHcFilters() {
+      allHcManagers = [...new Set(hcRecords.map((r) => r.manager))].sort((a, b) => a.localeCompare(b, "vi"));
+      allHcDistricts = [...new Set(hcRecords.map((r) => r.oldDistrict))].sort((a, b) => a.localeCompare(b, "vi"));
+      populateFilterMenu(hcManagerMenuEl, allHcManagers);
+      populateFilterMenu(hcDistrictMenuEl, allHcDistricts);
+      hcRefresh();
+    }
+
+    // HC: mặc định không chọn gì → bảng trống. Quy ước per-facet: rỗng = "không lọc theo facet này".
+    // Availability: nếu facet nguồn rỗng (không ràng buộc) → hiện toàn bộ option của facet còn lại.
+    function hcAvailManagers() {
+      return hcSelectedDistricts.size === 0
+        ? new Set(allHcManagers)
+        : new Set(hcRecords.filter((r) => hcSelectedDistricts.has(r.oldDistrict)).map((r) => r.manager));
+    }
+    function hcAvailDistricts() {
+      return hcSelectedManagers.size === 0
+        ? new Set(allHcDistricts)
+        : new Set(hcRecords.filter((r) => hcSelectedManagers.has(r.manager)).map((r) => r.oldDistrict));
+    }
+
+    function hcRefresh() {
+      renderMenu(hcManagerMenuEl, hcManagerToggleEl, allHcManagers, hcSelectedManagers, hcAvailManagers(), "-- Chọn --", "mục");
+      renderMenu(hcDistrictMenuEl, hcDistrictToggleEl, allHcDistricts, hcSelectedDistricts, hcAvailDistricts(), "-- Chọn --", "mục");
+      hcApplyFilter();
+    }
+
+    function onHcManagerChange(value, isAll, checked) {
+      applySelection(hcSelectedManagers, hcAvailManagers(), value, isAll, checked);
+      hcRefresh();
+    }
+    function onHcDistrictChange(value, isAll, checked) {
+      applySelection(hcSelectedDistricts, hcAvailDistricts(), value, isAll, checked);
+      hcRefresh();
+    }
+
+    hcManagerMenuEl.addEventListener("change", (e) => {
+      if (e.target.type !== "checkbox") return;
+      onHcManagerChange(e.target.value, e.target.value === "__all__", e.target.checked);
+    });
+    hcDistrictMenuEl.addEventListener("change", (e) => {
+      if (e.target.type !== "checkbox") return;
+      onHcDistrictChange(e.target.value, e.target.value === "__all__", e.target.checked);
+    });
+    hcManagerMenuEl.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action="clear"]')) onHcManagerChange(null, true, false);
+    });
+    hcDistrictMenuEl.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action="clear"]')) onHcDistrictChange(null, true, false);
+    });
+
+    function hcApplyFilter() {
+      if (hcSelectedManagers.size === 0 && hcSelectedDistricts.size === 0) {
+        hcEmptyStateEl.hidden = false;
+        hcResultsContainerEl.hidden = true;
+        hcSummaryEl.hidden = true;
+        return;
+      }
+
+      const filtered = hcRecords.filter((r) =>
+        (hcSelectedManagers.size === 0 || hcSelectedManagers.has(r.manager)) &&
+        (hcSelectedDistricts.size === 0 || hcSelectedDistricts.has(r.oldDistrict))
+      );
+
+      hcResultsBodyEl.innerHTML = filtered.map((r) => `
+        <tr>
+          <td data-label="Quận/Huyện cũ">${escapeHtml(r.oldDistrict)}</td>
+          <td data-label="Chuyên viên QL">${escapeHtml(r.manager)}</td>
+          <td data-label="Mã Site ID cũ"><span class="code-pill">${escapeHtml(r.oldSiteId)}</span></td>
+          <td data-label="Phường/Xã mới">${escapeHtml(r.newWard)}</td>
+          <td data-label="Mã Site ID mới"><span class="code-pill">${escapeHtml(r.newSiteId)}</span></td>
+        </tr>
+      `).join("");
+
+      hcEmptyStateEl.hidden = true;
+      hcResultsContainerEl.hidden = false;
+      hcSummaryEl.hidden = false;
+      hcSummaryEl.textContent = `Hiển thị ${filtered.length} bản ghi`;
+    }
+  </script>
+</body>
+</html>

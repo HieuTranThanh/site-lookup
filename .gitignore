@@ -1,0 +1,33 @@
+# ============================================
+# Chi deploy file can thiet de web chay (index.html, style.css, mapping.json)
+# va cac file noi dung lien quan. Bo qua moi thu khong can thiet.
+# ============================================
+
+# Script dev / deploy (chi dung tren may local, web khong can)
+*.bat
+
+# Cong cu local: chuyen Excel -> JSON (chay tren may maintainer, web khong can).
+# Bo qua ca thu muc: script Python, file Excel nguon noi bo va JSON sinh tam.
+helper/
+
+# File tham chieu Google Sheets / Office (khong phai noi dung web)
+*.gsheet
+*.gdoc
+*.gslides
+
+# Rac he dieu hanh
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Thu muc editor / IDE
+.vscode/
+.idea/
+.claude/
+
+# Log
+*.log
+
+# MD
+*.md

@@ -1,0 +1,232 @@
+// ======================== CẤU HÌNH ========================
+const CONFIG = {
+  DETAIL_SHEET_NAME: "Details",       // Tên sheet log chi tiết
+  SUMMARY_SHEET_NAME: "Summary",     // Tên sheet tổng hợp theo ngày
+  DETAIL_KEEP_DAYS: 30,              // Giữ log chi tiết tối đa bao nhiêu ngày
+  SUMMARY_KEEP_DAYS: 3650,           // Giữ summary tối đa bao nhiêu ngày (~10 năm)
+};
+// ============================================================
+
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CONFIG.DETAIL_SHEET_NAME);
+
+    if (!sheet) {
+      throw new Error("Sheet '" + CONFIG.DETAIL_SHEET_NAME + "' not found.");
+    }
+
+    const data = JSON.parse(e.postData.contents || "{}");
+
+    sheet.appendRow([
+      new Date(),
+      data.event || "",
+      data.foundCount || 0,
+      data.totalCount || 0,
+      data.dataSource || "",
+      data.userAgent || ""
+    ]);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        ok: false,
+        error: String(error)
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Chạy hàng ngày bằng trigger (1 lần/ngày).
+ * 1. Tổng hợp log hôm qua thành 1 dòng trong sheet Summary
+ * 2. Xóa log chi tiết cũ hơn DETAIL_KEEP_DAYS
+ * 3. Xóa summary cũ hơn SUMMARY_KEEP_DAYS
+ */
+function dailyMaintenance() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const detailSheet = ss.getSheetByName(CONFIG.DETAIL_SHEET_NAME);
+  if (!detailSheet) return;
+
+  var summarySheet = ss.getSheetByName(CONFIG.SUMMARY_SHEET_NAME);
+  if (!summarySheet) {
+    summarySheet = ss.insertSheet(CONFIG.SUMMARY_SHEET_NAME);
+    summarySheet.appendRow([
+      "Ngày", "Tổng request", "Tổng foundCount", "Tổng totalCount",
+      "Search", "Lookup", "Nguồn dữ liệu"
+    ]);
+    summarySheet.getRange(1, 1, 1, 7).setFontWeight("bold");
+  }
+
+  // --- Bước 1: Tổng hợp tất cả ngày chưa có trong Summary ---
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  // Lấy danh sách ngày đã có trong Summary
+  var existingDates = {};
+  var summaryLastRow = summarySheet.getLastRow();
+  if (summaryLastRow >= 2) {
+    var summaryDates = summarySheet.getRange(2, 1, summaryLastRow - 1, 1).getValues();
+    var tz = Session.getScriptTimeZone();
+    for (var s = 0; s < summaryDates.length; s++) {
+      var val = summaryDates[s][0];
+      var key = (val instanceof Date)
+        ? Utilities.formatDate(val, tz, "yyyy-MM-dd")
+        : String(val);
+      existingDates[key] = true;
+    }
+  }
+
+  const lastRow = detailSheet.getLastRow();
+  if (lastRow >= 1) {
+    const allData = detailSheet.getRange(1, 1, lastRow, 6).getValues();
+
+    // Gom log theo từng ngày
+    var dailyStats = {};
+    for (var i = 0; i < allData.length; i++) {
+      var row = allData[i];
+      var rowDate = new Date(row[0]);
+      if (isNaN(rowDate.getTime())) continue;
+      if (rowDate >= todayStart) continue; // bỏ qua hôm nay (chưa kết thúc)
+
+      var dateKey = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "yyyy-MM-dd");
+      if (existingDates[dateKey]) continue; // đã có trong Summary rồi
+
+      if (!dailyStats[dateKey]) {
+        dailyStats[dateKey] = {
+          totalRequests: 0, totalFound: 0, totalTotal: 0,
+          searchCount: 0, lookupCount: 0, dataSources: {}
+        };
+      }
+
+      var stats = dailyStats[dateKey];
+      stats.totalRequests++;
+      stats.totalFound += Number(row[2]) || 0;
+      stats.totalTotal += Number(row[3]) || 0;
+
+      var event = String(row[1]).toLowerCase();
+      if (event === "search") stats.searchCount++;
+      else if (event === "lookup") stats.lookupCount++;
+
+      var src = String(row[4]);
+      if (src) stats.dataSources[src] = (stats.dataSources[src] || 0) + 1;
+    }
+
+    // Ghi vào Summary
+    var newDates = Object.keys(dailyStats);
+    for (var d = 0; d < newDates.length; d++) {
+      var dk = newDates[d];
+      var st = dailyStats[dk];
+      var srcSummary = Object.keys(st.dataSources)
+        .map(function(k) { return k + ":" + st.dataSources[k]; })
+        .join(", ");
+
+      summarySheet.appendRow([
+        dk, st.totalRequests, st.totalFound, st.totalTotal,
+        st.searchCount, st.lookupCount, srcSummary
+      ]);
+    }
+  }
+
+  // --- Sort Summary theo ngày mới nhất trước (Z-A) ---
+  summaryLastRow = summarySheet.getLastRow();
+  if (summaryLastRow >= 3) {
+    summarySheet.getRange(2, 1, summaryLastRow - 1, 7)
+      .sort({ column: 1, ascending: false });
+  }
+
+  // --- Bước 2: Xóa log chi tiết cũ hơn DETAIL_KEEP_DAYS ---
+  deleteOldRows_(detailSheet, CONFIG.DETAIL_KEEP_DAYS);
+
+  // --- Bước 3: Xóa summary cũ hơn SUMMARY_KEEP_DAYS ---
+  deleteOldRows_(summarySheet, CONFIG.SUMMARY_KEEP_DAYS);
+}
+
+function deleteOldRows_(sheet, keepDays) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - keepDays);
+  cutoff.setHours(0, 0, 0, 0);
+
+  var dates = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var deleteCount = 0;
+
+  for (var i = 0; i < dates.length; i++) {
+    var d = new Date(dates[i][0]);
+    if (!isNaN(d.getTime()) && d < cutoff) {
+      deleteCount++;
+    } else {
+      break;
+    }
+  }
+
+  if (deleteCount > 0) {
+    sheet.deleteRows(2, deleteCount);
+  }
+}
+
+/**
+ * Chạy 1 lần để xóa các dòng trùng trong Summary (giữ lại 1 dòng/ngày).
+ * Sau khi chạy xong có thể xóa hàm này.
+ */
+function deduplicateSummary() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(CONFIG.SUMMARY_SHEET_NAME);
+  if (!sheet) return;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return;
+
+  var tz = Session.getScriptTimeZone();
+  var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  var seen = {};
+  var uniqueRows = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var val = data[i][0];
+    var key = (val instanceof Date)
+      ? Utilities.formatDate(val, tz, "yyyy-MM-dd")
+      : String(val);
+
+    if (!seen[key]) {
+      seen[key] = true;
+      uniqueRows.push(data[i]);
+    }
+  }
+
+  var removed = data.length - uniqueRows.length;
+  if (removed === 0) {
+    Logger.log("Không có dòng trùng.");
+    return;
+  }
+
+  sheet.deleteRows(2, lastRow - 1);
+  if (uniqueRows.length > 0) {
+    sheet.getRange(2, 1, uniqueRows.length, 7).setValues(uniqueRows);
+  }
+
+  Logger.log("Đã xóa " + removed + " dòng trùng, giữ lại " + uniqueRows.length + " dòng.");
+}
+
+/**
+ * Chạy 1 lần để tạo trigger tự động chạy dailyMaintenance hàng ngày.
+ */
+function setupDailyTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === "dailyMaintenance") {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  ScriptApp.newTrigger("dailyMaintenance")
+    .timeBased()
+    .everyDays(1)
+    .atHour(2)
+    .create();
+}
